@@ -45,7 +45,7 @@ describe("createLinkRequestSchema", () => {
 
   it("accepts a minimal valid body and an optional label", () => {
     expect(createLinkRequestSchema.safeParse(valid).success).toBe(true);
-    expect(createLinkRequestSchema.safeParse({ ...valid, label: "Affiche hall B" }).success).toBe(
+    expect(createLinkRequestSchema.safeParse({ ...valid, label: "Poster, hall B" }).success).toBe(
       true,
     );
   });

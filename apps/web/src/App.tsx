@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from "react-router";
+import { Link, NavLink, Route, Routes } from "react-router";
 
 import { en } from "./i18n/en.js";
 import { CodesPage } from "./pages/CodesPage.js";
@@ -11,7 +11,20 @@ import { StatsPage } from "./pages/StatsPage.js";
 export function App() {
   return (
     <>
-      <a className="skip-link" href="#main">
+      {/* Fragment navigation would be swallowed by HashRouter (it would route
+          to /main), so the skip link moves focus programmatically instead. */}
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(event) => {
+          event.preventDefault();
+          const main = document.getElementById("main");
+          if (main !== null) {
+            main.focus();
+            main.scrollIntoView();
+          }
+        }}
+      >
         {en.app.skipToContent}
       </a>
       <header className="site-header">
@@ -32,11 +45,10 @@ export function App() {
             </NavLink>
             <NavLink to="/codes">{en.app.nav.codes}</NavLink>
             <NavLink to="/stats">{en.app.nav.stats}</NavLink>
-            <NavLink to="/privacy">{en.app.nav.privacy}</NavLink>
           </nav>
         </div>
       </header>
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<CreatePage />} />
           <Route path="/codes" element={<CodesPage />} />
@@ -47,8 +59,12 @@ export function App() {
         </Routes>
       </main>
       <footer className="site-footer">
-        {en.app.tagline} ·{" "}
-        <a href="https://github.com/titouanlegourrierec/qr-tracker">{en.app.sourceCode}</a>
+        <p className="footer-tagline">{en.app.tagline}</p>
+        <p>
+          {en.app.copyright(new Date().getFullYear())} ·{" "}
+          <Link to="/privacy">{en.app.nav.privacy}</Link> ·{" "}
+          <a href="https://github.com/titouanlegourrierec/qr-tracker">{en.app.sourceCode}</a>
+        </p>
       </footer>
     </>
   );

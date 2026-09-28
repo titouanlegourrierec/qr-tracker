@@ -95,10 +95,10 @@ the deploy job (or the dashboard), set the variable, and re-run the _Deploy_ wor
 
 ## Troubleshooting
 
-| Symptom                                            | Fix                                                                                                 |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Deploy job fails on migrations                     | Check `database_id` in wrangler.jsonc and the API token's D1 permission                             |
-| Web app shows "Impossible de contacter le serveur" | `VITE_API_URL` variable wrong/missing, or the Pages origin is missing from `ALLOWED_ORIGINS`        |
-| Turnstile widget shows an error                    | Site key/domain mismatch: the widget's domain list must include `titouanlegourrierec.github.io`     |
-| Creation always returns TURNSTILE_FAILED           | `TURNSTILE_SECRET_KEY` secret not set on the worker, or site/secret keys are from different widgets |
-| 403 on admin CLI                                   | `ADMIN_TOKEN` secret differs from the one you pass to the script                                    |
+| Symptom                                    | Fix                                                                                                 |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| Deploy job fails on migrations             | Check `database_id` in wrangler.jsonc and the API token's D1 permission                             |
+| Web app shows "Could not reach the server" | `VITE_API_URL` variable wrong/missing, or the Pages origin is missing from `ALLOWED_ORIGINS`        |
+| Turnstile widget shows an error            | Site key/domain mismatch: the widget's domain list must include `titouanlegourrierec.github.io`     |
+| Creation always returns TURNSTILE_FAILED   | `TURNSTILE_SECRET_KEY` secret not set on the worker, or site/secret keys are from different widgets |
+| 403 on admin CLI                           | `ADMIN_TOKEN` secret differs from the one you pass to the script                                    |

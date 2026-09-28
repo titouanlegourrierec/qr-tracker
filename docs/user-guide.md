@@ -1,7 +1,7 @@
 # User guide — QR Tracker
 
-QR Tracker is a free tool for creating QR codes and tracking how they are used,
-**without accounts and without personal data**.
+QR Tracker is a free tool for creating QR codes and tracking how they are used —
+**no account required, no personal data collected**.
 
 👉 <https://titouanlegourrierec.github.io/qr-tracker/>
 
@@ -30,15 +30,16 @@ it. Use **Export (JSON)** to make a backup or move it to another computer.
 Three ways:
 
 - open your bookmarked **private link**;
-- go through **My QR codes** → _Statistics_;
+- open **My QR codes** and click _Statistics_;
 - or **Statistics** → enter the code (7 characters) and the secret key.
 
-You will find: the number of scans, unique visitors (a per-day estimate), scans per day
-and per hour, the hour-of-day and day-of-week distributions, and the top countries,
-cities, devices, operating systems, browsers, languages and networks. Bots (WhatsApp or
+The dashboard shows: the number of scans, unique visitors (a per-day estimate), scans per day
+and per hour, the hour-of-day and day-of-week distributions, a world map of scan
+locations, and the top countries, cities, devices, operating systems, browsers and
+languages. Bots (WhatsApp or
 Slack link previews, search-engine crawlers…) are excluded by default — a checkbox lets
-you include them. The **Export scans (CSV)** button downloads the anonymous detail for
-Excel/R/Python.
+you include them. The **Export scans (CSV)** button downloads the anonymized per-scan data
+for Excel/R/Python.
 
 ## Edit or delete
 
@@ -54,14 +55,14 @@ At the bottom of the statistics page you can:
 ## Printing tips
 
 - Download the **PNG** (1024 px) or the **SVG** for printing.
-- Keep a white margin around the QR code and test it with your phone before sending it
-  to print.
+- Keep a white margin around the QR code and test it with your phone before printing it
+  at scale.
 
-## Privacy in short
+## Privacy at a glance
 
 No IP address or persistent identifier is ever kept; scan data is anonymous and deleted
 after 12 months. Details: the site's **Privacy** page.
 
-## Problems?
+## Having trouble?
 
 Open an issue: <https://github.com/titouanlegourrierec/qr-tracker/issues>

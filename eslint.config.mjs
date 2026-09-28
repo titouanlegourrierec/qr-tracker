@@ -43,6 +43,8 @@ export default defineConfig(
         },
       ],
       "import-x/no-duplicates": "error",
+      // Vite asset-query imports ("file.json?url") are resolved by Vite, not Node.
+      "import-x/no-unresolved": ["error", { ignore: ["\\?url$"] }],
       // Numbers interpolate deterministically; forbidding them adds String() noise for no safety.
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       // TypeScript itself reports undefined identifiers; no-undef false-positives on

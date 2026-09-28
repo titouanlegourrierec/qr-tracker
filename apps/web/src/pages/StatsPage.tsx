@@ -1,6 +1,6 @@
 import { DEFAULT_TIMEZONE, secretKeySchema, slugSchema } from "@qr-tracker/shared";
 import type { Link, StatsResponse } from "@qr-tracker/shared";
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 import { useParams } from "react-router";
 
@@ -11,7 +11,11 @@ import { TopList } from "../components/TopList.js";
 import { API_URL } from "../config.js";
 import { en } from "../i18n/en.js";
 import { api, ApiRequestError } from "../lib/api.js";
+import { countryName, countryNumericId, languageName } from "../lib/countries.js";
 import { downloadBlob } from "../lib/download.js";
+
+// The world topology + geo chart code only load when a dashboard renders.
+const GeoMapCanvas = lazy(() => import("../components/GeoMapCanvas.js"));
 
 function browserTimezone(): string {
   try {
@@ -40,6 +44,15 @@ function errorMessage(err: unknown): string {
   return err instanceof ApiRequestError ? en.errors[err.code] : en.app.error;
 }
 
+function deviceName(value: string): string {
+  if (value in en.stats.devices) {
+    return en.stats.devices[value as keyof typeof en.stats.devices];
+  }
+  return value;
+}
+
+type QuickRange = "7" | "30" | "all" | null;
+
 interface Filters {
   from?: string;
   to?: string;
@@ -61,6 +74,7 @@ export function StatsPage() {
     slugSchema.safeParse(slug).success && secretKeySchema.safeParse(secretKey).success;
 
   const [filters, setFilters] = useState<Filters>({ includeBots: false });
+  const [quick, setQuick] = useState<QuickRange>("all");
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
   const [data, setData] = useState<Loaded | null>(null);
@@ -105,6 +119,7 @@ export function StatsPage() {
 
   function applyRange(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    setQuick(null);
     setFilters((current) => ({
       ...current,
       ...(fromInput === "" ? {} : { from: fromInput }),
@@ -114,11 +129,13 @@ export function StatsPage() {
 
   function quickRange(days: number | null) {
     if (days === null) {
+      setQuick("all");
       setFromInput("");
       setToInput("");
       setFilters((current) => ({ includeBots: current.includeBots }));
       return;
     }
+    setQuick(days === 7 ? "7" : "30");
     const to = todayIn(tz);
     const from = shiftDate(to, -(days - 1));
     setFromInput(from);
@@ -144,6 +161,10 @@ export function StatsPage() {
   const stats = data?.stats ?? null;
   const link = data?.link ?? null;
   const shortUrl = link === null ? null : `${API_URL}/r/${link.slug}`;
+  const hasGeo =
+    stats?.topCountries.some(
+      (entry) => entry.value !== null && countryNumericId(entry.value) !== null,
+    ) ?? false;
 
   return (
     <>
@@ -171,7 +192,7 @@ export function StatsPage() {
 
       {link !== null && stats !== null && (
         <>
-          <div className="filters card">
+          <div className="toolbar card">
             <form className="filters" onSubmit={applyRange}>
               <label className="field">
                 <span>{en.stats.range.from}</span>
@@ -194,41 +215,51 @@ export function StatsPage() {
                 />
               </label>
               <button type="submit">{en.stats.range.apply}</button>
-              <button
-                type="button"
-                onClick={() => {
-                  quickRange(7);
-                }}
-              >
-                {en.stats.range.last7}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  quickRange(30);
-                }}
-              >
-                {en.stats.range.last30}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  quickRange(null);
-                }}
-              >
-                {en.stats.range.all}
-              </button>
+              <div className="segmented" role="group">
+                <button
+                  type="button"
+                  aria-pressed={quick === "7"}
+                  onClick={() => {
+                    quickRange(7);
+                  }}
+                >
+                  {en.stats.range.last7}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={quick === "30"}
+                  onClick={() => {
+                    quickRange(30);
+                  }}
+                >
+                  {en.stats.range.last30}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={quick === "all"}
+                  onClick={() => {
+                    quickRange(null);
+                  }}
+                >
+                  {en.stats.range.all}
+                </button>
+              </div>
             </form>
-            <label>
-              <input
-                type="checkbox"
-                checked={filters.includeBots}
-                onChange={(e) => {
-                  setFilters((current) => ({ ...current, includeBots: e.target.checked }));
-                }}
-              />{" "}
-              {en.stats.includeBots}
-            </label>
+            <div className="toolbar-row">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={filters.includeBots}
+                  onChange={(e) => {
+                    setFilters((current) => ({ ...current, includeBots: e.target.checked }));
+                  }}
+                />{" "}
+                {en.stats.includeBots}
+              </label>
+              <button type="button" className="toolbar-export" onClick={exportCsv}>
+                {en.stats.exportCsv}
+              </button>
+            </div>
           </div>
 
           <div className="totals-grid">
@@ -241,13 +272,13 @@ export function StatsPage() {
               <span className="label">{en.stats.totals.uniqueVisitors}</span>
             </div>
             <div className="card">
-              <span className="value" style={{ fontSize: "1rem" }}>
+              <span className="value value-date">
                 {formatDateTime(stats.totals.firstScanAt, tz)}
               </span>
               <span className="label">{en.stats.totals.firstScan}</span>
             </div>
             <div className="card">
-              <span className="value" style={{ fontSize: "1rem" }}>
+              <span className="value value-date">
                 {formatDateTime(stats.totals.lastScanAt, tz)}
               </span>
               <span className="label">{en.stats.totals.lastScan}</span>
@@ -257,51 +288,87 @@ export function StatsPage() {
           {stats.totals.scans === 0 ? (
             <p className="card">{en.stats.empty}</p>
           ) : (
-            <div className="charts-grid">
-              <ChartWithTable
-                title={en.stats.charts.byDay}
-                type="line"
-                labels={stats.byDay.map((p) => p.date)}
-                values={stats.byDay.map((p) => p.scans)}
-              />
-              {stats.byHour !== null && (
+            <>
+              <h2 className="section-heading">{en.stats.sections.overTime}</h2>
+              <div className="charts-grid">
+                <div className="span-2">
+                  <ChartWithTable
+                    title={en.stats.charts.byDay}
+                    type="line"
+                    labels={stats.byDay.map((p) => p.date)}
+                    values={stats.byDay.map((p) => p.scans)}
+                  />
+                </div>
+                {stats.byHour !== null && (
+                  <div className="span-2">
+                    <ChartWithTable
+                      title={en.stats.charts.byHour}
+                      type="bar"
+                      labels={stats.byHour.map((p) => p.hour.replace("T", " "))}
+                      values={stats.byHour.map((p) => p.scans)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <h2 className="section-heading">{en.stats.sections.where}</h2>
+              <div className="geo-grid">
+                <div className="geo-main">
+                  <div className="card map-card">
+                    <h3>{en.stats.map.title}</h3>
+                    <div className="map-box">
+                      <Suspense fallback={<p className="muted">{en.app.loading}</p>}>
+                        <GeoMapCanvas entries={stats.topCountries} />
+                      </Suspense>
+                    </div>
+                    <p className="muted map-hint">
+                      {hasGeo ? en.stats.map.hint : en.stats.map.empty}
+                    </p>
+                  </div>
+                  <TopList title={en.stats.tops.cities} entries={stats.topCities} />
+                </div>
+                <div className="geo-side">
+                  <TopList
+                    title={en.stats.tops.countries}
+                    entries={stats.topCountries}
+                    format={countryName}
+                  />
+                </div>
+              </div>
+
+              <h2 className="section-heading">{en.stats.sections.when}</h2>
+              <div className="charts-grid">
                 <ChartWithTable
-                  title={en.stats.charts.byHour}
+                  title={en.stats.charts.hourOfDay}
                   type="bar"
-                  labels={stats.byHour.map((p) => p.hour.replace("T", " "))}
-                  values={stats.byHour.map((p) => p.scans)}
+                  labels={stats.hourOfDay.map((_, hour) => `${hour}:00`)}
+                  values={stats.hourOfDay}
                 />
-              )}
-              <ChartWithTable
-                title={en.stats.charts.hourOfDay}
-                type="bar"
-                labels={stats.hourOfDay.map((_, hour) => `${hour}:00`)}
-                values={stats.hourOfDay}
-              />
-              <ChartWithTable
-                title={en.stats.charts.dayOfWeek}
-                type="bar"
-                labels={[...en.stats.days]}
-                values={stats.dayOfWeek}
-              />
-            </div>
+                <ChartWithTable
+                  title={en.stats.charts.dayOfWeek}
+                  type="bar"
+                  labels={[...en.stats.days]}
+                  values={stats.dayOfWeek}
+                />
+              </div>
+
+              <h2 className="section-heading">{en.stats.sections.audience}</h2>
+              <div className="tops-grid">
+                <TopList
+                  title={en.stats.tops.devices}
+                  entries={stats.topDevices}
+                  format={deviceName}
+                />
+                <TopList title={en.stats.tops.os} entries={stats.topOs} />
+                <TopList title={en.stats.tops.browsers} entries={stats.topBrowsers} />
+                <TopList
+                  title={en.stats.tops.languages}
+                  entries={stats.topLanguages}
+                  format={languageName}
+                />
+              </div>
+            </>
           )}
-
-          <div className="actions-row">
-            <button type="button" onClick={exportCsv}>
-              {en.stats.exportCsv}
-            </button>
-          </div>
-
-          <div className="tops-grid">
-            <TopList title={en.stats.tops.countries} entries={stats.topCountries} />
-            <TopList title={en.stats.tops.cities} entries={stats.topCities} />
-            <TopList title={en.stats.tops.devices} entries={stats.topDevices} />
-            <TopList title={en.stats.tops.os} entries={stats.topOs} />
-            <TopList title={en.stats.tops.browsers} entries={stats.topBrowsers} />
-            <TopList title={en.stats.tops.languages} entries={stats.topLanguages} />
-            <TopList title={en.stats.tops.isps} entries={stats.topIsps} />
-          </div>
 
           <ManagePanel
             link={link}

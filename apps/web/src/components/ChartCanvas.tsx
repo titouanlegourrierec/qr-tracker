@@ -9,6 +9,7 @@ import {
   PointElement,
   Tooltip,
 } from "chart.js";
+import type { ChartArea, ScriptableContext } from "chart.js";
 import { useEffect, useRef } from "react";
 
 // Explicit registration keeps the (lazy-loaded) chart bundle tree-shaken.
@@ -45,9 +46,22 @@ export default function ChartCanvas({ type, labels, values, label }: ChartCanvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas === null) return;
-    const accent = cssVar("--accent") || "#2563eb";
-    const grid = cssVar("--chart-grid") || "#e5e9ee";
-    const text = cssVar("--text-muted") || "#57606a";
+    const accent = cssVar("--accent") || "#4f46e5";
+    const grid = cssVar("--chart-grid") || "#eceff3";
+    const text = cssVar("--text-muted") || "#5b6472";
+
+    // Soft vertical gradient under line charts. Chart.js types chartArea as
+    // always set, but it is undefined during the first scriptable pass
+    // (before layout), hence the widening cast.
+    const lineFill = (context: ScriptableContext<"line">) => {
+      const { ctx } = context.chart;
+      const chartArea = context.chart.chartArea as ChartArea | undefined;
+      if (chartArea === undefined) return `${accent}33`;
+      const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+      gradient.addColorStop(0, `${accent}59`);
+      gradient.addColorStop(1, `${accent}05`);
+      return gradient;
+    };
 
     const chart = new Chart(canvas, {
       type,
@@ -57,12 +71,13 @@ export default function ChartCanvas({ type, labels, values, label }: ChartCanvas
           {
             label,
             data: values,
-            backgroundColor: type === "bar" ? accent : `${accent}33`,
+            backgroundColor: type === "bar" ? accent : lineFill,
             borderColor: accent,
             borderWidth: type === "line" ? 2 : 0,
+            borderRadius: type === "bar" ? 4 : 0,
             pointRadius: labels.length > 60 ? 0 : 2,
             fill: type === "line",
-            tension: 0.2,
+            tension: 0.3,
           },
         ],
       },

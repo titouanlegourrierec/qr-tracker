@@ -2,7 +2,7 @@ import { secretKeySchema, slugSchema } from "@qr-tracker/shared";
 import { z } from "zod";
 
 /**
- * "Mes QR codes" — stored in this browser's localStorage only (clearly labelled
+ * "My QR codes" — stored in this browser's localStorage only (clearly labelled
  * as such in the UI). Reads are Zod-validated; a corrupt store yields [].
  */
 

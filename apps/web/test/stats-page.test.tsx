@@ -15,6 +15,10 @@ import { KEY, makeStats, server, SLUG } from "./msw.js";
 vi.mock("../src/components/ChartCanvas.js", () => ({
   default: () => <div data-testid="chart-canvas" />,
 }));
+// Same for the world map (chartjs-chart-geo needs a real canvas too).
+vi.mock("../src/components/GeoMapCanvas.js", () => ({
+  default: () => <div data-testid="geo-map-canvas" />,
+}));
 
 const API = "http://localhost:8787";
 
@@ -69,10 +73,16 @@ describe("StatsPage", () => {
     expect(screen.getAllByText("Chart data as a table").length).toBeGreaterThanOrEqual(3);
     expect(screen.getByRole("heading", { name: "Scans per day" })).toBeInTheDocument();
 
-    // Tops: unknown values are localized, device types translated.
+    // Tops: unknown values localized; country codes, languages and device
+    // types shown as display names.
     expect(screen.getByText("Unknown")).toBeInTheDocument();
     expect(screen.getByText("Mobile")).toBeInTheDocument();
-    expect(screen.getByText("Orange")).toBeInTheDocument();
+    expect(screen.getByText("France")).toBeInTheDocument();
+    expect(screen.getByText("French")).toBeInTheDocument();
+
+    // The map section renders (mocked canvas) with its hint.
+    expect(screen.getByTestId("geo-map-canvas")).toBeInTheDocument();
+    expect(screen.getByText(/shaded by number of scans/)).toBeInTheDocument();
   });
 
   it("refetches with includeBots=true when the toggle is checked", async () => {

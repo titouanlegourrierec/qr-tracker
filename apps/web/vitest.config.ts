@@ -13,9 +13,15 @@ export default defineConfig({
     coverage: {
       provider: "istanbul",
       include: ["src/**/*.{ts,tsx}"],
-      // ChartCanvas needs a real <canvas> (Chart.js); it is exercised by the
-      // Playwright E2E suite instead of jsdom. main.tsx is the bootstrap.
-      exclude: ["src/main.tsx", "src/env.d.ts", "src/components/ChartCanvas.tsx"],
+      // ChartCanvas/GeoMapCanvas need a real <canvas> (Chart.js); they are
+      // exercised by the Playwright E2E suite instead of jsdom. main.tsx is
+      // the bootstrap.
+      exclude: [
+        "src/main.tsx",
+        "src/env.d.ts",
+        "src/components/ChartCanvas.tsx",
+        "src/components/GeoMapCanvas.tsx",
+      ],
       thresholds: { lines: 80 },
     },
   },

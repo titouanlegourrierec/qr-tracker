@@ -41,7 +41,7 @@ describe("error handling", () => {
 
   it("adds a CSP header on HTML responses", async () => {
     const app = createApp();
-    app.get("/page", (c) => c.html("<p>bonjour</p>"));
+    app.get("/page", (c) => c.html("<p>hello</p>"));
     const res = await app.request("/page", {}, env);
     expect(res.headers.get("Content-Security-Policy")).toContain("default-src 'none'");
   });

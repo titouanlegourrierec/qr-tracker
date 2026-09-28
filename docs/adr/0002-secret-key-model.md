@@ -28,7 +28,7 @@ and compares digests with `crypto.subtle.timingSafeEqual`. The key travels only 
 ## Consequences
 
 - A lost key is unrecoverable by design — the UI shows a prominent one-time warning, and
-  the "Mes QR codes" localStorage list plus its JSON export mitigate accidental loss.
+  the "My QR codes" localStorage list plus its JSON export mitigate accidental loss.
 - Anyone with the link's key has full control of that link (no revocation short of
   deleting the link). Acceptable for the threat model of a lab tool.
 - The admin kill switch uses a separate status value (`blocked`) that the owner's API

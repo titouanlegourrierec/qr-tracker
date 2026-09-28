@@ -5,6 +5,7 @@ interface TurnstileRenderOptions {
   "expired-callback"?: () => void;
   "error-callback"?: () => void;
   theme?: "auto" | "light" | "dark";
+  size?: "normal" | "flexible" | "compact";
   language?: string;
 }
 

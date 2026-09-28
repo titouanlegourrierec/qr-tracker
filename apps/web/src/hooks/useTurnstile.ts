@@ -56,6 +56,8 @@ export function useTurnstile(): TurnstileState {
         widgetIdRef.current = window.turnstile.render(container, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: "auto",
+          // Fills the container instead of a fixed 300px (overflows small phones).
+          size: "flexible",
           callback: (freshToken) => {
             setToken(freshToken);
           },

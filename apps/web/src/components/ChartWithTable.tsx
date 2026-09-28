@@ -16,7 +16,7 @@ export interface ChartWithTableProps {
 export function ChartWithTable({ title, type, labels, values }: ChartWithTableProps) {
   return (
     <div className="card">
-      <h2>{title}</h2>
+      <h3>{title}</h3>
       <div className="chart-box">
         <Suspense fallback={<p className="muted">{en.app.loading}</p>}>
           <ChartCanvas type={type} labels={labels} values={values} label={title} />
