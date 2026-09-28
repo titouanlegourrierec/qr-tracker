@@ -7,10 +7,10 @@
     "predev": "node ./scripts/ensure-dev-vars.mjs",
     "dev": "wrangler d1 migrations apply qr-tracker-db --local && wrangler dev --port 8787",
     "deploy": "wrangler deploy",
-    "cf-typegen": "wrangler types",
-    "pretypecheck": "node ./scripts/ensure-dev-vars.mjs && wrangler types",
+    "cf-typegen": "node ./scripts/ensure-dev-vars.mjs && wrangler types",
+    "pretypecheck": "pnpm run cf-typegen",
     "typecheck": "tsc --noEmit",
-    "pretest": "node ./scripts/ensure-dev-vars.mjs && wrangler types",
+    "pretest": "pnpm run cf-typegen",
     "test": "vitest run --coverage"
   },
   "dependencies": {

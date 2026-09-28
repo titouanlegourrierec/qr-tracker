@@ -11,7 +11,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky && pnpm --filter @qr-tracker/worker run cf-typegen",
     "dev": "pnpm --recursive --parallel --stream dev",
     "build": "pnpm --recursive build",
     "lint": "eslint .",
@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit && pnpm --recursive typecheck",
     "test": "pnpm --recursive test",
     "test:e2e": "playwright test",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "prelint": "pnpm --filter @qr-tracker/worker run cf-typegen"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
