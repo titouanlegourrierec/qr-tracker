@@ -1,0 +1,48 @@
+{
+  "name": "qr-tracker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "QR code generator with anonymous scan analytics — GitHub Pages + Cloudflare Workers",
+  "license": "MIT",
+  "author": "Titouan Le Gourrierec",
+  "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "dev": "pnpm --recursive --parallel --stream dev",
+    "build": "pnpm --recursive build",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --recursive typecheck",
+    "test": "pnpm --recursive test",
+    "test:e2e": "playwright test",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.0",
+    "eslint": "10.11.0",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-import-x": "4.17.1",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mjs,js}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml,css,html}": [
+      "prettier --write"
+    ]
+  }
+}
