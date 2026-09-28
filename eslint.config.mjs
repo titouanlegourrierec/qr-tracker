@@ -1,6 +1,8 @@
 // @ts-check
 import eslint from "@eslint/js";
+import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import { flatConfigs as importX } from "eslint-plugin-import-x";
+import reactHooks from "eslint-plugin-react-hooks";
 import { config as defineConfig, configs as tsConfigs } from "typescript-eslint";
 
 export default defineConfig(
@@ -28,10 +30,7 @@ export default defineConfig(
       },
     },
     settings: {
-      "import-x/resolver": {
-        typescript: true,
-        node: true,
-      },
+      "import-x/resolver-next": [createTypeScriptImportResolver()],
       "import-x/core-modules": ["cloudflare:test", "cloudflare:workers"],
     },
     rules: {
@@ -50,6 +49,10 @@ export default defineConfig(
       // runtime globals like console/crypto in Workers code (typescript-eslint FAQ).
       "no-undef": "off",
     },
+  },
+  {
+    files: ["apps/web/**/*.{ts,tsx}"],
+    extends: [reactHooks.configs.flat.recommended],
   },
   {
     files: ["**/*.{js,mjs}"],

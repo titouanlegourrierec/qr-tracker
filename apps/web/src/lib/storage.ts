@@ -1,0 +1,80 @@
+import { secretKeySchema, slugSchema } from "@qr-tracker/shared";
+import { z } from "zod";
+
+/**
+ * "Mes QR codes" — stored in this browser's localStorage only (clearly labelled
+ * as such in the UI). Reads are Zod-validated; a corrupt store yields [].
+ */
+
+const STORAGE_KEY = "qr-tracker.codes.v1";
+
+export const storedCodeSchema = z.object({
+  slug: slugSchema,
+  label: z.string().nullable(),
+  secretKey: secretKeySchema,
+  createdAt: z.iso.datetime(),
+});
+export type StoredCode = z.infer<typeof storedCodeSchema>;
+
+const storeSchema = z.object({
+  version: z.literal(1),
+  items: z.array(storedCodeSchema),
+});
+
+function readStore(): StoredCode[] {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return [];
+    const parsed = storeSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data.items : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeStore(items: StoredCode[]): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, items }));
+  } catch {
+    // Quota exceeded or storage disabled — the list is a convenience, never fatal.
+  }
+}
+
+export function loadCodes(): StoredCode[] {
+  return [...readStore()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+export function saveCode(code: StoredCode): void {
+  const items = readStore().filter((c) => c.slug !== code.slug);
+  items.push(code);
+  writeStore(items);
+}
+
+export function removeCode(slug: string): void {
+  writeStore(readStore().filter((c) => c.slug !== slug));
+}
+
+/** JSON export of the local list (backup / transfer between browsers). */
+export function exportCodesJson(): string {
+  return JSON.stringify({ version: 1, items: readStore() }, null, 2);
+}
+
+/**
+ * Imports a previously exported JSON backup, merging by slug (imported entries
+ * win). Returns the number of added/updated codes, or null when invalid.
+ */
+export function importCodesJson(json: string): number | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  const result = storeSchema.safeParse(parsed);
+  if (!result.success) return null;
+  const existing = readStore();
+  const imported = result.data.items;
+  const importedSlugs = new Set(imported.map((c) => c.slug));
+  writeStore([...existing.filter((c) => !importedSlugs.has(c.slug)), ...imported]);
+  return imported.length;
+}
