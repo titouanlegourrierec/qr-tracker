@@ -16,6 +16,12 @@ export interface ScanFields {
   visitorHash: string;
 }
 
+/** Purges scans older than the retention cutoff (cron). */
+export async function deleteScansBefore(db: D1Database, cutoffIso: string): Promise<number> {
+  const result = await db.prepare("DELETE FROM scans WHERE scanned_at < ?1").bind(cutoffIso).run();
+  return result.meta.changes;
+}
+
 export async function insertScan(db: D1Database, scan: ScanFields): Promise<void> {
   await db
     .prepare(

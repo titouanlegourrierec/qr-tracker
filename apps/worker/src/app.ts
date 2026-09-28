@@ -5,6 +5,7 @@ import { ApiError } from "./lib/api-error.js";
 import { logError } from "./lib/log.js";
 import { corsMiddleware } from "./middleware/cors.js";
 import { securityHeaders } from "./middleware/security-headers.js";
+import { adminRoutes } from "./routes/admin.js";
 import { linksRoutes } from "./routes/links.js";
 import { redirectRoutes } from "./routes/redirect.js";
 
@@ -20,6 +21,7 @@ export function createApp(): Hono<AppBindings> {
 
   app.get("/api/health", (c) => c.json({ ok: true }));
   app.route("/api/links", linksRoutes());
+  app.route("/api/admin", adminRoutes());
   app.route("/r", redirectRoutes());
 
   app.notFound((c) => c.json(errorBody("NOT_FOUND", "Resource not found"), 404));
