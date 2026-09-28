@@ -50,5 +50,10 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
   the owner API cannot set or clear it; redirect serves 410 for both non-active states).
 - react-hooks v7 lint (React Compiler rules): no synchronous setState inside effects, no
   property access on hook-returned objects holding refs during render (destructure them).
+- If an E2E run is interrupted, orphaned servers can block ports 8787/4173. Clean with:
+  `pkill -f "wrangler.js dev"; pkill -f workerd; lsof -ti :4173 | xargs kill -9`
+  (a plain `pkill -f "wrangler dev"` does NOT match the real command line).
+- An empty `VITE_API_URL`/`VITE_TURNSTILE_SITE_KEY` falls back to localhost/test-key with
+  a build warning (first-deploy circularity: the worker URL exists only after deploy #1).
 - Turnstile dev/test keys (always pass): sitekey `1x00000000000000000000AA`,
   secret `1x0000000000000000000000000000000AA` (see `.dev.vars.example`).
