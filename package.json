@@ -17,7 +17,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "pnpm --recursive typecheck",
+    "typecheck": "tsc --noEmit && pnpm --recursive typecheck",
     "test": "pnpm --recursive test",
     "test:e2e": "playwright test",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
@@ -26,6 +26,7 @@
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
     "@types/node": "24.19.0",
     "eslint": "10.11.0",
     "eslint-import-resolver-typescript": "4.4.5",
