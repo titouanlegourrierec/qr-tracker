@@ -24,6 +24,12 @@ export const HOUR_SERIES_MAX_DAYS = 14;
 /** Number of entries in each "top …" stats list. */
 export const TOP_LIMIT = 10;
 
+/** Hard cap on CSV export rows (worker memory protection). */
+export const EXPORT_MAX_ROWS = 50_000;
+
+/** byDay series is clamped to at most this many days. */
+export const STATS_MAX_RANGE_DAYS = 366;
+
 /** Fixed-window rate limits, enforced by the D1-backed limiter. */
 export const RATE_LIMITS = {
   /** Link creation, keyed by hashed IP. */

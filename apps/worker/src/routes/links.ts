@@ -1,12 +1,23 @@
-import { createLinkRequestSchema, slugSchema, updateLinkRequestSchema } from "@qr-tracker/shared";
+import {
+  createLinkRequestSchema,
+  CSV_COLUMNS,
+  EXPORT_MAX_ROWS,
+  exportQuerySchema,
+  slugSchema,
+  statsQuerySchema,
+  updateLinkRequestSchema,
+} from "@qr-tracker/shared";
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { z } from "zod";
 
 import type { AppBindings } from "../app.js";
 import { ApiError } from "../lib/api-error.js";
+import { toCsv } from "../lib/csv.js";
 import { rateLimit } from "../middleware/rate-limit.js";
-import { createLink, deleteLink, getLink, updateLink } from "../services/links.js";
+import { fetchScansForExport } from "../repositories/stats.js";
+import { authorizeLink, createLink, deleteLink, getLink, updateLink } from "../services/links.js";
+import { computeStats } from "../services/stats.js";
 
 /** Parses the request body against a schema, mapping failures to VALIDATION_ERROR. */
 async function parseBody<T>(c: Context<AppBindings>, schema: z.ZodType<T>): Promise<T> {
@@ -21,7 +32,15 @@ async function parseBody<T>(c: Context<AppBindings>, schema: z.ZodType<T>): Prom
   return parsed.data;
 }
 
-function getSlugParam(c: Context<AppBindings, "/:slug">): string {
+/** Parses URL query params against a schema, mapping failures to VALIDATION_ERROR. */
+function parseQuery<T>(c: Context<AppBindings>, schema: z.ZodType<T>): T {
+  const params = Object.fromEntries(new URL(c.req.url).searchParams);
+  const parsed = schema.safeParse(params);
+  if (!parsed.success) throw new ApiError("VALIDATION_ERROR", z.prettifyError(parsed.error));
+  return parsed.data;
+}
+
+function getSlugParam(c: Context<AppBindings>): string {
   const parsed = slugSchema.safeParse(c.req.param("slug"));
   if (!parsed.success) throw new ApiError("NOT_FOUND", "Link not found");
   return parsed.data;
@@ -54,6 +73,42 @@ export function linksRoutes(): Hono<AppBindings> {
     async (c) => {
       const link = await getLink(c.env.DB, getSlugParam(c), getBearerToken(c));
       return c.json(link);
+    },
+  );
+
+  routes.get(
+    "/:slug/stats",
+    rateLimit("authenticated", { failOpen: true, keySuffix: slugSuffix }),
+    async (c) => {
+      const query = parseQuery(c, statsQuerySchema);
+      const link = await authorizeLink(c.env.DB, getSlugParam(c), getBearerToken(c));
+      const stats = await computeStats(c.env.DB, link, query);
+      return c.json(stats);
+    },
+  );
+
+  routes.get(
+    "/:slug/export",
+    rateLimit("authenticated", { failOpen: true, keySuffix: slugSuffix }),
+    async (c) => {
+      const query = parseQuery(c, exportQuerySchema);
+      const slug = getSlugParam(c);
+      const link = await authorizeLink(c.env.DB, slug, getBearerToken(c));
+      // Export filters use UTC day boundaries (raw rows are UTC timestamps).
+      const rows = await fetchScansForExport(
+        c.env.DB,
+        link.id,
+        {
+          ...(query.from !== undefined ? { startIso: `${query.from}T00:00:00.000Z` } : {}),
+          ...(query.to !== undefined ? { endIso: `${query.to}T23:59:59.999Z` } : {}),
+        },
+        query.includeBots,
+        EXPORT_MAX_ROWS,
+      );
+      return c.body(toCsv(CSV_COLUMNS, rows), 200, {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="qr-${slug}-scans.csv"`,
+      });
     },
   );
 
