@@ -7,9 +7,9 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 
 | Command         | What                                                                    |
 | --------------- | ----------------------------------------------------------------------- |
-| `pnpm dev`      | Worker (`wrangler dev`) + web (`vite`) in parallel                      |
+| `pnpm dev`      | Worker (`wrangler dev`, :8787) + web (`vite`, :5173) in parallel        |
 | `pnpm check`    | format:check → lint → typecheck → tests (must pass before every commit) |
-| `pnpm test:e2e` | Playwright end-to-end suite                                             |
+| `pnpm test:e2e` | Playwright (boots worker with fresh D1 + builds/serves SPA on :4173)    |
 | `pnpm build`    | Build all packages                                                      |
 
 ## Conventions
@@ -44,5 +44,11 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 - Privacy invariants: never store or log raw IPs, full user-agent strings, or any
   persistent identifier. Visitor hashes use a daily rotated salt.
 - Node ≥ 25 does not bundle Corepack. Local setup: Node 24 (`.nvmrc`) or `npm i -g pnpm`.
+- Node ≥ 25 also ships an experimental global `localStorage` that shadows jsdom's in web
+  tests — `apps/web/test/setup.ts` restores the real one; use `window.localStorage` in code.
+- Link status is three-valued: `active` / `disabled` (owner) / `blocked` (admin only —
+  the owner API cannot set or clear it; redirect serves 410 for both non-active states).
+- react-hooks v7 lint (React Compiler rules): no synchronous setState inside effects, no
+  property access on hook-returned objects holding refs during render (destructure them).
 - Turnstile dev/test keys (always pass): sitekey `1x00000000000000000000AA`,
   secret `1x0000000000000000000000000000000AA` (see `.dev.vars.example`).

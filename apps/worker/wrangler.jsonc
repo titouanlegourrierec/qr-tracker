@@ -12,7 +12,7 @@
       "database_name": "qr-tracker-db",
       // Replace with the ID printed by `wrangler d1 create qr-tracker-db`
       // (see docs/DEPLOYMENT.md). Any placeholder works for local dev and tests.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "efa826b2-cb46-416c-b124-370ee91bddfd",
       "migrations_dir": "migrations",
     },
   ],
