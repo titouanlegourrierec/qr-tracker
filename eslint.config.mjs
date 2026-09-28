@@ -43,6 +43,8 @@ export default defineConfig(
         },
       ],
       "import-x/no-duplicates": "error",
+      // Numbers interpolate deterministically; forbidding them adds String() noise for no safety.
+      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
     },
   },
   {
