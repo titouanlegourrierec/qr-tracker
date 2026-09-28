@@ -5,6 +5,7 @@ import { ApiError } from "../lib/api-error.js";
 import { generateSecretKey, generateSlug, sha256Hex, timingSafeEqualHex } from "../lib/crypto.js";
 import { log } from "../lib/log.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
+import { checkUrlReputation } from "../lib/url-reputation.js";
 import {
   deleteLinkWithScans,
   findLinkBySlug,
@@ -33,6 +34,9 @@ export async function createLink(
   if (!verified) throw new ApiError("TURNSTILE_FAILED", "Turnstile verification failed");
 
   assertValidTargetUrl(input.targetUrl, requestUrl.hostname);
+  if ((await checkUrlReputation(input.targetUrl, env)) === "malicious") {
+    throw new ApiError("TARGET_URL_INVALID", "Target URL rejected (reputation)");
+  }
 
   const secretKey = generateSecretKey();
   const secretHash = await sha256Hex(secretKey);

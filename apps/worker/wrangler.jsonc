@@ -21,8 +21,11 @@
     "crons": ["10 3 * * *"],
   },
   "vars": {
-    "ALLOWED_ORIGINS": "https://titouanlegourrierec.github.io,http://localhost:5173",
+    // localhost:5173 = vite dev, localhost:4173 = vite preview (Playwright E2E).
+    "ALLOWED_ORIGINS": "https://titouanlegourrierec.github.io,http://localhost:5173,http://localhost:4173",
     "RETENTION_DAYS": "365",
+    // Optional destination-reputation check (no provider wired; see docs/adr/).
+    "URL_REPUTATION_ENABLED": "false",
   },
   // Secrets (wrangler secret put / .dev.vars): TURNSTILE_SECRET_KEY, ADMIN_TOKEN
 }

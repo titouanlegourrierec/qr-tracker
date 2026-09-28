@@ -103,3 +103,15 @@ describe("verifyTurnstile", () => {
     expect(await verifyTurnstile("secret", "token", boom)).toBe(false);
   });
 });
+
+describe("checkUrlReputation", () => {
+  it("returns ok when the flag is off and unknown when on without a provider", async () => {
+    const { checkUrlReputation } = await import("../src/lib/url-reputation.js");
+    expect(
+      await checkUrlReputation("https://example.com", { URL_REPUTATION_ENABLED: "false" }),
+    ).toBe("ok");
+    expect(
+      await checkUrlReputation("https://example.com", { URL_REPUTATION_ENABLED: "true" }),
+    ).toBe("unknown");
+  });
+});
