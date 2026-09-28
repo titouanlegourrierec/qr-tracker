@@ -93,6 +93,39 @@ the deploy job (or the dashboard), set the variable, and re-run the _Deploy_ wor
 - **Web**: GitHub Pages → custom domain (see GitHub docs). Then add that origin to
   `ALLOWED_ORIGINS`, and set Vite `base` to `/` in `apps/web/vite.config.ts`.
 
+## 9. Releases and rollback
+
+Every push to `main` is deployed to production once the checks pass, and the _Deploy_
+workflow ends with a smoke test against production (worker health, the 404 page for an
+unknown code, and the web app wired to the worker). A release is a tagged, documented
+point in that history that you can return to.
+
+**Cutting a release** ([Semantic Versioning](https://semver.org/)):
+
+1. Move the `[Unreleased]` entries of `CHANGELOG.md` under a new `[X.Y.Z] - date`
+   heading and set `version` to `X.Y.Z` in the four `package.json` files.
+2. Commit as `chore(release): X.Y.Z`, push, and wait for _CI_ and _Deploy_ to be green.
+3. Tag that commit and publish the release notes:
+
+   ```bash
+   git tag -a vX.Y.Z -m "QR Tracker vX.Y.Z"
+   git push origin vX.Y.Z
+   gh release create vX.Y.Z --title "vX.Y.Z" --notes-file release-notes.md --verify-tag
+   ```
+
+**Rolling back**:
+
+- **Worker only, instantly**: in `apps/worker/`, `npx wrangler deployments list` shows
+  each deployed version (its message is the commit SHA), and
+  `npx wrangler rollback <version-id>` puts one back. This restores code only — the D1
+  schema is not rolled back.
+- **Worker and web app**: `git revert` the offending commits on `main` and push; the
+  pipeline redeploys the previous state. For up to 30 days you can instead re-run the
+  _Deploy_ run of a known-good commit (`gh run rerun <run-id>`). Deploying a tag or
+  another branch directly is refused: the `github-pages` environment only accepts `main`.
+- **Migrations are forward-only**: keep them additive (new tables, columns, indexes) so
+  that an older worker keeps working against a newer schema.
+
 ## Troubleshooting
 
 | Symptom                                    | Fix                                                                                                 |
