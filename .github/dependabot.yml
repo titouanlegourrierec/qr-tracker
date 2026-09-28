@@ -9,6 +9,19 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # Vitest is pinned to 4.1.x: @cloudflare/vitest-plugin requires ^4.1
+      # and @vitest/coverage-istanbul pins its peer exactly (see CLAUDE.md).
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint supports TS < 6.1 only (TS 7 is the Go rewrite).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # ua-parser-js v2 is AGPL — prohibited (MIT v1 line only).
+      - dependency-name: "ua-parser-js"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
