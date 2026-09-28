@@ -10,12 +10,14 @@ export interface ChartWithTableProps {
   type: "line" | "bar";
   labels: string[];
   values: number[];
+  /** Extra class on the card (e.g. a grid span). */
+  className?: string;
 }
 
 /** A chart plus its WCAG data-table alternative. */
-export function ChartWithTable({ title, type, labels, values }: ChartWithTableProps) {
+export function ChartWithTable({ title, type, labels, values, className }: ChartWithTableProps) {
   return (
-    <div className="card">
+    <div className={className === undefined ? "card" : `card ${className}`}>
       <h3>{title}</h3>
       <div className="chart-box">
         <Suspense fallback={<p className="muted">{en.app.loading}</p>}>

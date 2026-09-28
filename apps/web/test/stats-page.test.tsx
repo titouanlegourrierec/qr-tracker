@@ -15,9 +15,9 @@ import { KEY, makeStats, server, SLUG } from "./msw.js";
 vi.mock("../src/components/ChartCanvas.js", () => ({
   default: () => <div data-testid="chart-canvas" />,
 }));
-// Same for the world map (chartjs-chart-geo needs a real canvas too).
-vi.mock("../src/components/GeoMapCanvas.js", () => ({
-  default: () => <div data-testid="geo-map-canvas" />,
+// The map loader fetches the world topology; the map itself has its own tests.
+vi.mock("../src/components/GeoMapLoader.js", () => ({
+  default: () => <div data-testid="geo-map" />,
 }));
 
 const API = "http://localhost:8787";
@@ -81,7 +81,7 @@ describe("StatsPage", () => {
     expect(screen.getByText("French")).toBeInTheDocument();
 
     // The map section renders (mocked canvas) with its hint.
-    expect(screen.getByTestId("geo-map-canvas")).toBeInTheDocument();
+    expect(screen.getByTestId("geo-map")).toBeInTheDocument();
     expect(screen.getByText(/shaded by number of scans/)).toBeInTheDocument();
   });
 

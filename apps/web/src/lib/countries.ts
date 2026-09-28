@@ -266,6 +266,27 @@ export function countryNumericId(alpha2: string): string | null {
   return ALPHA2_TO_NUMERIC[alpha2.toUpperCase()] ?? null;
 }
 
+const NUMERIC_TO_ALPHA2: Record<string, string> = Object.fromEntries(
+  Object.entries(ALPHA2_TO_NUMERIC).map(([alpha2, numeric]) => [numeric, alpha2]),
+);
+
+/** Kosovo has no ISO numeric code; world-atlas leaves it without an id and Cloudflare reports "XK". */
+const KOSOVO = "XK";
+
+/** Alpha-2 code of a world-atlas feature (by numeric id, or by name when it has none). */
+export function countryAlpha2ForFeature(
+  id: string | number | undefined,
+  name: string | undefined,
+): string | null {
+  if (id !== undefined) return NUMERIC_TO_ALPHA2[String(id).padStart(3, "0")] ?? null;
+  return name === "Kosovo" ? KOSOVO : null;
+}
+
+/** Whether scans reported for this alpha-2 code can be placed on the world map. */
+export function isOnWorldMap(alpha2: string): boolean {
+  return countryNumericId(alpha2) !== null || alpha2.toUpperCase() === KOSOVO;
+}
+
 function displayNames(type: "region" | "language"): Intl.DisplayNames | null {
   try {
     return new Intl.DisplayNames(["en"], { type });

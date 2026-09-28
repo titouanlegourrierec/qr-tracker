@@ -33,13 +33,12 @@ Three ways:
 - open **My QR codes** and click _Statistics_;
 - or **Statistics** → enter the code (7 characters) and the secret key.
 
-The dashboard shows: the number of scans, unique visitors (a per-day estimate), scans per day
-and per hour, the hour-of-day and day-of-week distributions, a world map of scan
-locations, and the top countries, cities, devices, operating systems, browsers and
-languages. Bots (WhatsApp or
-Slack link previews, search-engine crawlers…) are excluded by default — a checkbox lets
-you include them. The **Export scans (CSV)** button downloads the anonymized per-scan data
-for Excel/R/Python.
+The dashboard shows: the number of scans, unique visitors (a per-day estimate), scans per
+day and per hour, the hour-of-day and day-of-week distributions, a world map of scan
+locations (zoom and drag to explore it), and the top countries, cities, devices, operating
+systems, browsers and languages. Bots (WhatsApp or Slack link previews, search-engine
+crawlers…) are excluded by default — a checkbox lets you include them. The **Export scans
+(CSV)** button downloads the anonymized per-scan data for Excel/R/Python.
 
 ## Edit or delete
 

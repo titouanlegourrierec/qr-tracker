@@ -63,6 +63,9 @@ test("full lifecycle: create → scan → stats → edit → disable → delete"
   }).toPass({ timeout: 20_000 });
   // Charts actually render on a real canvas.
   await expect(page.locator("canvas").first()).toBeVisible();
+  // The world map is drawn from the real topology, one shape per country.
+  await expect(page.locator(".geo-map-svg")).toBeVisible();
+  expect(await page.locator(".geo-map-svg path").count()).toBeGreaterThan(100);
   // Device breakdown recognized the phone.
   await expect(page.getByRole("rowheader", { name: "Mobile", exact: true })).toBeVisible();
 

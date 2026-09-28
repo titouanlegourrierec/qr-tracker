@@ -11,11 +11,11 @@ import { TopList } from "../components/TopList.js";
 import { API_URL } from "../config.js";
 import { en } from "../i18n/en.js";
 import { api, ApiRequestError } from "../lib/api.js";
-import { countryName, countryNumericId, languageName } from "../lib/countries.js";
+import { countryName, isOnWorldMap, languageName } from "../lib/countries.js";
 import { downloadBlob } from "../lib/download.js";
 
-// The world topology + geo chart code only load when a dashboard renders.
-const GeoMapCanvas = lazy(() => import("../components/GeoMapCanvas.js"));
+// The world topology and map code only load when a dashboard renders.
+const GeoMapLoader = lazy(() => import("../components/GeoMapLoader.js"));
 
 function browserTimezone(): string {
   try {
@@ -162,9 +162,7 @@ export function StatsPage() {
   const link = data?.link ?? null;
   const shortUrl = link === null ? null : `${API_URL}/r/${link.slug}`;
   const hasGeo =
-    stats?.topCountries.some(
-      (entry) => entry.value !== null && countryNumericId(entry.value) !== null,
-    ) ?? false;
+    stats?.topCountries.some((entry) => entry.value !== null && isOnWorldMap(entry.value)) ?? false;
 
   return (
     <>
@@ -290,54 +288,44 @@ export function StatsPage() {
           ) : (
             <>
               <h2 className="section-heading">{en.stats.sections.overTime}</h2>
-              <div className="charts-grid">
-                <div className="span-2">
-                  <ChartWithTable
-                    title={en.stats.charts.byDay}
-                    type="line"
-                    labels={stats.byDay.map((p) => p.date)}
-                    values={stats.byDay.map((p) => p.scans)}
-                  />
-                </div>
+              <div className="grid-2">
+                {/* Per-hour data only exists for short ranges; per-day then takes the full row. */}
+                <ChartWithTable
+                  title={en.stats.charts.byDay}
+                  type="line"
+                  labels={stats.byDay.map((p) => p.date)}
+                  values={stats.byDay.map((p) => p.scans)}
+                  {...(stats.byHour === null ? { className: "span-2" } : {})}
+                />
                 {stats.byHour !== null && (
-                  <div className="span-2">
-                    <ChartWithTable
-                      title={en.stats.charts.byHour}
-                      type="bar"
-                      labels={stats.byHour.map((p) => p.hour.replace("T", " "))}
-                      values={stats.byHour.map((p) => p.scans)}
-                    />
-                  </div>
+                  <ChartWithTable
+                    title={en.stats.charts.byHour}
+                    type="bar"
+                    labels={stats.byHour.map((p) => p.hour.replace("T", " "))}
+                    values={stats.byHour.map((p) => p.scans)}
+                  />
                 )}
               </div>
 
               <h2 className="section-heading">{en.stats.sections.where}</h2>
-              <div className="geo-grid">
-                <div className="geo-main">
-                  <div className="card map-card">
-                    <h3>{en.stats.map.title}</h3>
-                    <div className="map-box">
-                      <Suspense fallback={<p className="muted">{en.app.loading}</p>}>
-                        <GeoMapCanvas entries={stats.topCountries} />
-                      </Suspense>
-                    </div>
-                    <p className="muted map-hint">
-                      {hasGeo ? en.stats.map.hint : en.stats.map.empty}
-                    </p>
-                  </div>
-                  <TopList title={en.stats.tops.cities} entries={stats.topCities} />
-                </div>
-                <div className="geo-side">
-                  <TopList
-                    title={en.stats.tops.countries}
-                    entries={stats.topCountries}
-                    format={countryName}
-                  />
-                </div>
+              <div className="card">
+                <h3>{en.stats.map.title}</h3>
+                <Suspense fallback={<p className="muted">{en.app.loading}</p>}>
+                  <GeoMapLoader entries={stats.topCountries} />
+                </Suspense>
+                <p className="muted map-hint">{hasGeo ? en.stats.map.hint : en.stats.map.empty}</p>
+              </div>
+              <div className="grid-2">
+                <TopList
+                  title={en.stats.tops.countries}
+                  entries={stats.topCountries}
+                  format={countryName}
+                />
+                <TopList title={en.stats.tops.cities} entries={stats.topCities} />
               </div>
 
               <h2 className="section-heading">{en.stats.sections.when}</h2>
-              <div className="charts-grid">
+              <div className="grid-2">
                 <ChartWithTable
                   title={en.stats.charts.hourOfDay}
                   type="bar"

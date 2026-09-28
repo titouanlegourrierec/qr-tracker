@@ -508,37 +508,34 @@ tbody th[scope="row"] {
   letter-spacing: 0.05em;
 }
 
-.charts-grid {
+/* Two equal columns from tablet width up, one column on phones. */
+.grid-2 {
   display: grid;
   gap: 0.9rem;
   grid-template-columns: 1fr;
   margin: 1rem 0;
 }
 @media (min-width: 700px) {
-  .charts-grid {
+  .grid-2 {
     grid-template-columns: 1fr 1fr;
   }
 }
-.charts-grid .card {
+.grid-2 > .card {
   margin: 0;
 }
-.charts-grid .span-2 {
+.grid-2 > .span-2 {
   grid-column: 1 / -1;
 }
 
 /* Grid/flex items default to min-width auto, so a sized <canvas> would lock
    the whole page wider than the viewport when it shrinks (Chart.js can only
    resize down once the track is allowed to). */
-.charts-grid > *,
+.grid-2 > *,
 .tops-grid > *,
-.totals-grid > *,
-.geo-grid > *,
-.geo-main > *,
-.geo-side > * {
+.totals-grid > * {
   min-width: 0;
 }
-.chart-box canvas,
-.map-box canvas {
+.chart-box canvas {
   max-width: 100%;
 }
 .chart-box {
@@ -640,37 +637,106 @@ details.chart-data summary {
   font-weight: 600;
 }
 
-/* Map section */
-.geo-grid {
-  display: grid;
-  gap: 0.9rem;
-  grid-template-columns: 1fr;
-  align-items: start;
-  margin: 1rem 0;
-}
-@media (min-width: 860px) {
-  .geo-grid {
-    grid-template-columns: 2fr 1fr;
-  }
-}
-.geo-grid .card {
-  margin: 0;
-}
-.geo-main,
-.geo-side {
-  display: grid;
-  gap: 0.9rem;
-  align-content: start;
-}
-.map-box {
+/* World map */
+.geo-map {
   position: relative;
-  height: 340px;
+  user-select: none;
+  -webkit-user-select: none;
 }
-@media (max-width: 600px) {
-  .map-box {
-    height: 220px;
+.geo-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.geo-map.is-zoomed .geo-map-svg {
+  cursor: grab;
+}
+.geo-map.is-zoomed .geo-map-svg:active {
+  cursor: grabbing;
+}
+.geo-map-svg path {
+  fill: var(--chart-grid);
+  stroke: var(--surface);
+  stroke-width: 0.6;
+  /* Borders stay hairline at any zoom level. */
+  vector-effect: non-scaling-stroke;
+}
+.geo-map-svg path.has-scans {
+  fill: var(--accent);
+}
+.geo-map-svg path:hover {
+  stroke: var(--text);
+  stroke-width: 1.2;
+}
+
+.map-controls {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.map-controls button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+@media (max-width: 480px) {
+  /* A row across the (empty) Arctic covers less of the small map than a column. */
+  .map-controls {
+    flex-direction: row;
+  }
+  .map-controls button {
+    width: 1.75rem;
+    height: 1.75rem;
   }
 }
+.map-controls svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map-tooltip {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, calc(-100% - 12px));
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+.map-tooltip.below {
+  transform: translate(-50%, 16px);
+}
+
+.map-wheel-hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  text-align: center;
+  background: rgba(15, 17, 21, 0.55);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
 .map-hint {
   font-size: 0.85rem;
   margin: 0.6rem 0 0;

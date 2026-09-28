@@ -1,6 +1,34 @@
 import { describe, expect, it } from "vitest";
 
-import { countryName, countryNumericId, languageName } from "../src/lib/countries.js";
+import {
+  countryAlpha2ForFeature,
+  countryName,
+  countryNumericId,
+  isOnWorldMap,
+  languageName,
+} from "../src/lib/countries.js";
+
+describe("countryAlpha2ForFeature", () => {
+  it("maps world-atlas numeric ids back to alpha-2 codes", () => {
+    expect(countryAlpha2ForFeature("250", "France")).toBe("FR");
+    expect(countryAlpha2ForFeature("076", "Brazil")).toBe("BR");
+    expect(countryAlpha2ForFeature(76, "Brazil")).toBe("BR");
+    expect(countryAlpha2ForFeature("999", "Nowhere")).toBeNull();
+  });
+
+  it("recognizes Kosovo, which has no numeric id", () => {
+    expect(countryAlpha2ForFeature(undefined, "Kosovo")).toBe("XK");
+    expect(countryAlpha2ForFeature(undefined, "Somaliland")).toBeNull();
+  });
+});
+
+describe("isOnWorldMap", () => {
+  it("accepts mappable codes only", () => {
+    expect(isOnWorldMap("fr")).toBe(true);
+    expect(isOnWorldMap("XK")).toBe(true);
+    expect(isOnWorldMap("T1")).toBe(false);
+  });
+});
 
 describe("countryNumericId", () => {
   it("maps well-known alpha-2 codes to world-atlas numeric ids", () => {

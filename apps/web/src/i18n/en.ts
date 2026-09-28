@@ -111,8 +111,13 @@ export const en = {
     },
     map: {
       title: "Scan locations",
-      hint: "Countries are shaded by number of scans.",
+      hint: "Countries are shaded by number of scans. Drag to move; pinch, double-click or Ctrl/⌘ + scroll to zoom.",
       empty: "No location data yet — the map fills in as the QR code gets scanned.",
+      unavailable: "The map could not be loaded.",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+      reset: "Reset map view",
+      wheelHint: "Hold Ctrl (or ⌘) and scroll to zoom the map",
     },
     charts: {
       byDay: "Scans per day",

@@ -6,6 +6,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- World map navigation: zoom with the buttons, Ctrl/⌘ + scroll, trackpad pinch,
+  two-finger pinch on touch screens or double-click, and drag to move.
+
+### Changed
+
+- Statistics layout: "Scans per day" and "Scans per hour" side by side; the map spans the
+  full width, with Countries and Cities side by side below it.
+- The world map is now SVG drawn with d3-geo instead of chartjs-chart-geo: sharp at any
+  zoom level and lighter to download.
+
+### Fixed
+
+- Map tooltips showed "undefined" instead of the country name.
+
 ## [1.0.0] - 2026-09-28
 
 First public release.
