@@ -17,6 +17,13 @@ export function App() {
       <header className="site-header">
         <div className="inner">
           <NavLink to="/" className="brand">
+            <svg className="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+              <rect width="24" height="24" rx="6" fill="var(--accent)" />
+              <path
+                fill="var(--accent-contrast)"
+                d="M5 5h6v6H5zM7 7v2h2V7zM13 5h6v6h-6zM15 7v2h2V7zM5 13h6v6H5zM7 15v2h2v-2zM13 13h2v2h-2zM17 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 17h2v2h-2z"
+              />
+            </svg>
             {en.app.title}
           </NavLink>
           <nav className="site-nav" aria-label={en.app.mainNav}>

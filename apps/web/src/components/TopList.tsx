@@ -12,6 +12,7 @@ function display(value: string | null): string {
 }
 
 export function TopList({ title, entries }: { title: string; entries: TopEntry[] }) {
+  const max = entries.reduce((acc, entry) => Math.max(acc, entry.count), 0);
   return (
     <div className="card">
       <h2>{title}</h2>
@@ -19,15 +20,23 @@ export function TopList({ title, entries }: { title: string; entries: TopEntry[]
         <p className="muted">{en.stats.empty}</p>
       ) : (
         <table>
-          <caption className="muted" style={{ captionSide: "top", textAlign: "left" }}>
-            {title}
-          </caption>
+          <caption className="sr-only">{title}</caption>
           <tbody>
             {entries.map((entry) => (
               <tr key={entry.value ?? "__null__"}>
                 <th scope="row">{display(entry.value)}</th>
                 <td>
-                  {entry.count} {en.stats.tops.scans}
+                  <div className="top-cell">
+                    <span className="top-count">
+                      {entry.count} {en.stats.tops.scans}
+                    </span>
+                    <div className="top-bar" aria-hidden="true">
+                      <div
+                        className="top-bar-fill"
+                        style={{ width: `${max === 0 ? 0 : (entry.count / max) * 100}%` }}
+                      />
+                    </div>
+                  </div>
                 </td>
               </tr>
             ))}
