@@ -1,0 +1,5 @@
+# Copied to .dev.vars automatically by `pnpm dev` if .dev.vars is missing.
+# Turnstile test secret ("always passes") — safe to commit, works with the test sitekey.
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+# Local-only admin token for the kill-switch endpoints.
+ADMIN_TOKEN=dev-admin-token

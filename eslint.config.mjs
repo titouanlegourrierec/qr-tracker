@@ -32,6 +32,7 @@ export default defineConfig(
         typescript: true,
         node: true,
       },
+      "import-x/core-modules": ["cloudflare:test", "cloudflare:workers"],
     },
     rules: {
       "import-x/order": [
@@ -45,6 +46,9 @@ export default defineConfig(
       "import-x/no-duplicates": "error",
       // Numbers interpolate deterministically; forbidding them adds String() noise for no safety.
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
+      // TypeScript itself reports undefined identifiers; no-undef false-positives on
+      // runtime globals like console/crypto in Workers code (typescript-eslint FAQ).
+      "no-undef": "off",
     },
   },
   {

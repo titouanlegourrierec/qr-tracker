@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "qr-tracker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "observability": {
+    "enabled": true,
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "qr-tracker-db",
+      // Replace with the ID printed by `wrangler d1 create qr-tracker-db`
+      // (see docs/DEPLOYMENT.md). Any placeholder works for local dev and tests.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "triggers": {
+    // Daily at 03:10 UTC: rotate salts, purge old scans, clean rate-limit windows.
+    "crons": ["10 3 * * *"],
+  },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://titouanlegourrierec.github.io,http://localhost:5173",
+    "RETENTION_DAYS": "365",
+  },
+  // Secrets (wrangler secret put / .dev.vars): TURNSTILE_SECRET_KEY, ADMIN_TOKEN
+}
