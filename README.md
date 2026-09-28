@@ -1,10 +1,10 @@
 # QR Tracker
 
 Free QR code generator with **anonymous scan analytics**. No accounts: each QR code gets
-its own secret key. Built for a research lab, open to anyone. French UI.
+its own secret key. Built for a research lab, open to anyone.
 
 - 🌐 Web app: <https://titouanlegourrierec.github.io/qr-tracker/>
-- 🇫🇷 User guide: [docs/guide-utilisateur.md](docs/guide-utilisateur.md)
+- 📖 User guide: [docs/user-guide.md](docs/user-guide.md)
 
 ## What it does
 
@@ -80,10 +80,10 @@ from the example with Cloudflare's Turnstile _test_ keys — creation works imme
 ```
 apps/worker/       Cloudflare Worker: routes → services → repositories, lib/ pure fns,
                    migrations/, tests in the real workerd runtime
-apps/web/          React SPA (French UI), i18n/fr.ts, components/, pages/, MSW tests
+apps/web/          React SPA, i18n/en.ts, components/, pages/, MSW tests
 packages/shared/   Zod schemas + types + constants — the single API contract
 e2e/               Playwright suite (create → scan → stats → edit → delete)
-docs/              PLAN, ARCHITECTURE, DEPLOYMENT, ADRs, user guide (fr)
+docs/              PLAN, ARCHITECTURE, DEPLOYMENT, ADRs, user guide
 scripts/           admin.mjs (kill switch CLI)
 ```
 
@@ -91,7 +91,7 @@ scripts/           admin.mjs (kill switch CLI)
 
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — step-by-step deployment from scratch
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) & [docs/adr/](docs/adr/)
-- [docs/guide-utilisateur.md](docs/guide-utilisateur.md) — guide en français
+- [docs/user-guide.md](docs/user-guide.md) — user guide
 - [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ## License

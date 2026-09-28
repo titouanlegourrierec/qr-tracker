@@ -13,7 +13,7 @@ All notable changes to this project are documented here. The format follows
 - `GET /r/:slug` redirect (302, `no-store`) with asynchronous anonymous scan tracking:
   coarse geo, device/OS/browser families, language, bot flagging, daily-salted visitor
   hashes — no IPs, no full user-agents, no persistent identifiers.
-- Stats API and French dashboard: totals, per-day/per-hour series, hour-of-day and
+- Stats API and dashboard: totals, per-day/per-hour series, hour-of-day and
   day-of-week distributions, top countries/cities/devices/OS/browsers/languages/ISPs,
   bot toggle, date ranges, timezone-aware bucketing, CSV export.
 - Link management with the secret key: change destination, disable/enable, permanent
@@ -23,7 +23,7 @@ All notable changes to this project are documented here. The format follows
 - Daily cron: salt rotation, scan retention purge (default 12 months), rate-limit
   window cleanup.
 - D1-backed fixed-window rate limiting keyed by salted IP hashes.
-- "Mes QR codes" local list with JSON export/import; French privacy page; dark mode;
+- "My QR codes" local list with JSON export/import; privacy page; dark mode;
   WCAG 2.1 AA table alternatives for every chart.
 - CI (format/lint/typecheck/tests/coverage/build + Playwright E2E) and deploy pipeline
   (D1 migrations → worker → GitHub Pages).

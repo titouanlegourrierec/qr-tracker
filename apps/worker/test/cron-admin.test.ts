@@ -123,7 +123,7 @@ describe("POST /api/admin/links/:slug/status", () => {
     );
     expect(block.status).toBe(200);
 
-    // The redirect now serves the French 410 page.
+    // The redirect now serves the friendly 410 page.
     const redirect = await app.request(`${BASE}/r/admlnk1`, {}, env, createExecutionContext());
     expect(redirect.status).toBe(410);
 

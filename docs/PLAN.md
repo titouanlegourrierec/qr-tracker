@@ -25,7 +25,7 @@ Date: 2026-09-28. All version and platform facts below were verified against off
    └─────────────┘
 ```
 
-- **`apps/web`** — Vite + React static SPA, French UI, deployed to GitHub Pages under `/qr-tracker/`. No cookies, no analytics. Talks to the worker only via the JSON API.
+- **`apps/web`** — Vite + React static SPA deployed to GitHub Pages under `/qr-tracker/`. No cookies, no analytics. Talks to the worker only via the JSON API.
 - **`apps/worker`** — single Cloudflare Worker (free plan, `*.workers.dev`): redirect endpoint, JSON API, daily Cron Trigger. D1 for storage.
 - **`packages/shared`** — Zod schemas + TypeScript types for every request/response body, error codes, and shared constants (slug alphabet, key length, limits). Single source of truth imported by both apps.
 
@@ -43,7 +43,7 @@ src/
                       # visitor hash, Accept-Language parsing, timezone
                       # bucketing, CSV serialization, rate-limit window math
   middleware/         # auth (Bearer key), admin auth, rate limit, security headers, CORS
-  i18n/               # French HTML error pages for /r/:slug
+  i18n/               # HTML error pages for /r/:slug
 ```
 
 Rules: no business logic in route handlers; everything in `lib/` is a pure function with unit tests; repositories are the only modules that touch D1.
@@ -144,7 +144,7 @@ Details:
 - **Stats response** (computed in SQL, tz-mapped in service): totals (scans, unique visitors, first/last scan), time series per day + per hour (hour series only when range ≤ 14 days), hour-of-day and day-of-week distributions, top 10 of country/city/device/os/browser/language/ISP. `tz` defaults to `Europe/Paris`, validated against `Intl.supportedValuesOf('timeZone')`. `includeBots` defaults to `false`.
 - **Timezone strategy**: SQL groups by UTC hour (`strftime`); the service maps each UTC-hour bucket to the requested tz via `Intl.DateTimeFormat` and re-aggregates into local days/hours. Known limitation (documented): counts are exact only for whole-hour-offset zones; 30/45-min-offset zones (e.g. Asia/Kolkata) are off by up to an hour at day boundaries.
 - **CSV export**: same columns as the `scans` table minus `id`/`link_id`; downloaded client-side via `fetch` + Blob so the key stays in the header.
-- **Redirect**: `302` + `Cache-Control: no-store` (never 301). Unknown slug → 404, disabled → 410, both as friendly French HTML pages. Scan recording wrapped in `ctx.waitUntil()` with a top-level catch: tracking failure can never affect the redirect.
+- **Redirect**: `302` + `Cache-Control: no-store` (never 301). Unknown slug → 404, disabled → 410, both as friendly HTML pages. Scan recording wrapped in `ctx.waitUntil()` with a top-level catch: tracking failure can never affect the redirect.
 - **Bot detection**: `isbot` (Unlicense) **plus** a maintained supplemental regex list covering the previewers the brief names (WhatsApp, Slack, Discord, Facebook, X/Twitter, iMessage/`facebookexternalhit`-style agents, Telegram, search bots), backed by a fixture file of real captured UA strings. Bots are still redirected, flagged `is_bot = 1`, excluded from stats by default.
 - **Device/OS/browser**: `ua-parser-js@1` (MIT — v2 is AGPL and excluded). Only coarse families stored, never versions or full UA.
 - **Rate limiting** (D1-based, fixed window, in `middleware/` + pure window math in `lib/`): creation 10/h per hashed IP; stats/management 60/min per hashed IP+slug. Failure mode: **fail-closed on writes** (`POST/PATCH/DELETE`), **fail-open on reads** (stats/export) — recorded as ADR. Expired windows purged by the daily cron.
@@ -169,11 +169,11 @@ Mounted in `app.ts`: global middleware (security headers → CORS → error boun
 | `#/codes`            | "Mes QR codes" (localStorage list + JSON export/import)                              |
 | `#/stats`            | Manual slug + key entry                                                              |
 | `#/stats/:slug/:key` | Stats dashboard (private link format; also management: edit target, disable, delete) |
-| `#/confidentialite`  | Privacy page (French)                                                                |
+| `#/privacy`          | Privacy page                                                                         |
 
 Private stats link: `https://titouanlegourrierec.github.io/qr-tracker/#/stats/<slug>/<key>` — everything after `#` stays in the browser. Vite `base: '/qr-tracker/'`.
 
-QR generation: `qrcode` (MIT) client-side — SVG string + high-res PNG (~1024px, quiet zone, error correction M) rendered from the same data. Charts: **Chart.js v4** (MIT, tree-shakeable via explicit component registration), lazy-loaded with `React.lazy`/dynamic import on the stats route only. Each chart has an accessible `<table>` alternative (WCAG 2.1 AA). All UI strings in `apps/web/src/i18n/fr.ts`.
+QR generation: `qrcode` (MIT) client-side — SVG string + high-res PNG (~1024px, quiet zone, error correction M) rendered from the same data. Charts: **Chart.js v4** (MIT, tree-shakeable via explicit component registration), lazy-loaded with `React.lazy`/dynamic import on the stats route only. Each chart has an accessible `<table>` alternative (WCAG 2.1 AA). All UI strings in `apps/web/src/i18n/en.ts`.
 
 ---
 
@@ -201,14 +201,14 @@ Each milestone ends with `pnpm check` green + one Conventional Commit.
 | M1  | `packages/shared`   | Zod schemas for every API body/response, error codes, constants; unit tests                                                                                                                                                                                                                                                                            |
 | M2  | Worker foundation   | Hono app, `wrangler.jsonc`, D1 migrations, security headers + CORS + error middleware, `/api/health`, vitest-plugin wired with migrations in tests, `.dev.vars.example` (dummy Turnstile keys)                                                                                                                                                         |
 | M3  | Links CRUD + auth   | Slug/key generation, Turnstile verify, `POST /api/links`, Bearer-key middleware (constant-time), `GET/PATCH/DELETE /api/links/:slug`, D1 rate limiter                                                                                                                                                                                                  |
-| M4  | Redirect + tracking | `GET /r/:slug`, `waitUntil` recording, UA parsing + bot detection + fixtures, visitor hash + salts, French error pages; CPU sanity check in `wrangler dev`                                                                                                                                                                                             |
+| M4  | Redirect + tracking | `GET /r/:slug`, `waitUntil` recording, UA parsing + bot detection + fixtures, visitor hash + salts, error pages; CPU sanity check in `wrangler dev`                                                                                                                                                                                                    |
 | M5  | Stats + CSV         | Aggregation SQL + indexes, tz mapping, `GET …/stats`, `GET …/export`                                                                                                                                                                                                                                                                                   |
 | M6  | Cron + admin        | `scheduled` handler (salt rotation, scan purge, rate-limit cleanup), admin kill-switch endpoint + `scripts/admin.ts` CLI                                                                                                                                                                                                                               |
-| M7  | Web foundation      | Vite + React + HashRouter, `fr.ts` strings, mobile-first layout, dark mode, CSP meta, privacy page, API client                                                                                                                                                                                                                                         |
+| M7  | Web foundation      | Vite + React + HashRouter, `en.ts` strings, mobile-first layout, dark mode, CSP meta, privacy page, API client                                                                                                                                                                                                                                         |
 | M8  | Web create flow     | Turnstile widget, QR preview + PNG/SVG download, copy buttons, key-shown-once UI, private-link display, "Mes QR codes" (localStorage + JSON export/import)                                                                                                                                                                                             |
 | M9  | Web stats dashboard | Lazy Chart.js, all charts + accessible tables, date range, bot toggle, CSV download, manage panel (edit/disable/delete)                                                                                                                                                                                                                                |
 | M10 | E2E + hardening     | Playwright suite, coverage thresholds enforced, a11y pass                                                                                                                                                                                                                                                                                              |
-| M11 | CI/CD + docs        | `ci.yml`, `deploy.yml` (migrations → worker → Pages, pinned actions, least-privilege perms), README (Mermaid diagram), DEPLOYMENT.md, ARCHITECTURE.md + 3 ADRs, guide-utilisateur.md, CONTRIBUTING, CHANGELOG, CLAUDE.md finalized                                                                                                                     |
+| M11 | CI/CD + docs        | `ci.yml`, `deploy.yml` (migrations → worker → Pages, pinned actions, least-privilege perms), README (Mermaid diagram), DEPLOYMENT.md, ARCHITECTURE.md + 3 ADRs, user-guide.md, CONTRIBUTING, CHANGELOG, CLAUDE.md finalized                                                                                                                            |
 
 ---
 

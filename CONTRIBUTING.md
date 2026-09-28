@@ -31,8 +31,8 @@ Cloudflare's Turnstile _test_ keys — creation works offline-locally out of the
 - Tests accompany the code: pure logic in `src/lib/` is unit-tested; endpoints get
   integration tests in the real Workers runtime; UI gets Testing Library + MSW tests.
 - Coverage thresholds are enforced: ≥ 90% lines (worker, shared), ≥ 80% (web).
-- UI strings are French and live in `apps/web/src/i18n/fr.ts`. Code, comments, commits
-  and developer docs are English.
+- All user-facing strings live in `apps/web/src/i18n/en.ts` (centralized so another
+  language can be added later). Code, comments, commits and docs are English.
 - Privacy invariants (never store/log raw IPs, full user-agents, or any persistent
   identifier) are non-negotiable — see `docs/adr/0003-privacy-visitor-hashing.md`.
 

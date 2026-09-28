@@ -9,7 +9,7 @@ import { CopyButton } from "../components/CopyButton.js";
 import { ManagePanel } from "../components/ManagePanel.js";
 import { TopList } from "../components/TopList.js";
 import { API_URL } from "../config.js";
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 import { api, ApiRequestError } from "../lib/api.js";
 import { downloadBlob } from "../lib/download.js";
 
@@ -32,12 +32,12 @@ function shiftDate(date: string, days: number): string {
 }
 
 function formatDateTime(iso: string | null, tz: string): string {
-  if (iso === null) return fr.stats.totals.never;
-  return new Date(iso).toLocaleString("fr-FR", { timeZone: tz });
+  if (iso === null) return en.stats.totals.never;
+  return new Date(iso).toLocaleString("en-GB", { timeZone: tz });
 }
 
 function errorMessage(err: unknown): string {
-  return err instanceof ApiRequestError ? fr.errors[err.code] : fr.app.error;
+  return err instanceof ApiRequestError ? en.errors[err.code] : en.app.error;
 }
 
 interface Filters {
@@ -95,9 +95,9 @@ export function StatsPage() {
   if (!validParams) {
     return (
       <>
-        <h1>{fr.stats.title}</h1>
+        <h1>{en.stats.title}</h1>
         <p className="error-box" role="alert">
-          {fr.statsEntry.invalid}
+          {en.statsEntry.invalid}
         </p>
       </>
     );
@@ -148,7 +148,7 @@ export function StatsPage() {
   return (
     <>
       <h1>
-        {fr.stats.title}
+        {en.stats.title}
         {link !== null && ` — ${link.label ?? link.slug}`}
       </h1>
       {shortUrl !== null && (
@@ -160,7 +160,7 @@ export function StatsPage() {
 
       {loading && (
         <p className="muted" role="status">
-          {fr.stats.loading}
+          {en.stats.loading}
         </p>
       )}
       {error !== null && (
@@ -174,7 +174,7 @@ export function StatsPage() {
           <div className="filters card">
             <form className="filters" onSubmit={applyRange}>
               <label className="field">
-                <span>{fr.stats.range.from}</span>
+                <span>{en.stats.range.from}</span>
                 <input
                   type="date"
                   value={fromInput}
@@ -184,7 +184,7 @@ export function StatsPage() {
                 />
               </label>
               <label className="field">
-                <span>{fr.stats.range.to}</span>
+                <span>{en.stats.range.to}</span>
                 <input
                   type="date"
                   value={toInput}
@@ -193,14 +193,14 @@ export function StatsPage() {
                   }}
                 />
               </label>
-              <button type="submit">{fr.stats.range.apply}</button>
+              <button type="submit">{en.stats.range.apply}</button>
               <button
                 type="button"
                 onClick={() => {
                   quickRange(7);
                 }}
               >
-                {fr.stats.range.last7}
+                {en.stats.range.last7}
               </button>
               <button
                 type="button"
@@ -208,7 +208,7 @@ export function StatsPage() {
                   quickRange(30);
                 }}
               >
-                {fr.stats.range.last30}
+                {en.stats.range.last30}
               </button>
               <button
                 type="button"
@@ -216,7 +216,7 @@ export function StatsPage() {
                   quickRange(null);
                 }}
               >
-                {fr.stats.range.all}
+                {en.stats.range.all}
               </button>
             </form>
             <label>
@@ -227,61 +227,61 @@ export function StatsPage() {
                   setFilters((current) => ({ ...current, includeBots: e.target.checked }));
                 }}
               />{" "}
-              {fr.stats.includeBots}
+              {en.stats.includeBots}
             </label>
           </div>
 
           <div className="totals-grid">
             <div className="card">
               <span className="value">{stats.totals.scans}</span>
-              <span className="label">{fr.stats.totals.scans}</span>
+              <span className="label">{en.stats.totals.scans}</span>
             </div>
             <div className="card">
               <span className="value">{stats.totals.uniqueVisitors}</span>
-              <span className="label">{fr.stats.totals.uniqueVisitors}</span>
+              <span className="label">{en.stats.totals.uniqueVisitors}</span>
             </div>
             <div className="card">
               <span className="value" style={{ fontSize: "1rem" }}>
                 {formatDateTime(stats.totals.firstScanAt, tz)}
               </span>
-              <span className="label">{fr.stats.totals.firstScan}</span>
+              <span className="label">{en.stats.totals.firstScan}</span>
             </div>
             <div className="card">
               <span className="value" style={{ fontSize: "1rem" }}>
                 {formatDateTime(stats.totals.lastScanAt, tz)}
               </span>
-              <span className="label">{fr.stats.totals.lastScan}</span>
+              <span className="label">{en.stats.totals.lastScan}</span>
             </div>
           </div>
 
           {stats.totals.scans === 0 ? (
-            <p className="card">{fr.stats.empty}</p>
+            <p className="card">{en.stats.empty}</p>
           ) : (
             <div className="charts-grid">
               <ChartWithTable
-                title={fr.stats.charts.byDay}
+                title={en.stats.charts.byDay}
                 type="line"
                 labels={stats.byDay.map((p) => p.date)}
                 values={stats.byDay.map((p) => p.scans)}
               />
               {stats.byHour !== null && (
                 <ChartWithTable
-                  title={fr.stats.charts.byHour}
+                  title={en.stats.charts.byHour}
                   type="bar"
                   labels={stats.byHour.map((p) => p.hour.replace("T", " "))}
                   values={stats.byHour.map((p) => p.scans)}
                 />
               )}
               <ChartWithTable
-                title={fr.stats.charts.hourOfDay}
+                title={en.stats.charts.hourOfDay}
                 type="bar"
-                labels={stats.hourOfDay.map((_, hour) => `${hour}h`)}
+                labels={stats.hourOfDay.map((_, hour) => `${hour}:00`)}
                 values={stats.hourOfDay}
               />
               <ChartWithTable
-                title={fr.stats.charts.dayOfWeek}
+                title={en.stats.charts.dayOfWeek}
                 type="bar"
-                labels={[...fr.stats.days]}
+                labels={[...en.stats.days]}
                 values={stats.dayOfWeek}
               />
             </div>
@@ -289,18 +289,18 @@ export function StatsPage() {
 
           <div className="actions-row">
             <button type="button" onClick={exportCsv}>
-              {fr.stats.exportCsv}
+              {en.stats.exportCsv}
             </button>
           </div>
 
           <div className="tops-grid">
-            <TopList title={fr.stats.tops.countries} entries={stats.topCountries} />
-            <TopList title={fr.stats.tops.cities} entries={stats.topCities} />
-            <TopList title={fr.stats.tops.devices} entries={stats.topDevices} />
-            <TopList title={fr.stats.tops.os} entries={stats.topOs} />
-            <TopList title={fr.stats.tops.browsers} entries={stats.topBrowsers} />
-            <TopList title={fr.stats.tops.languages} entries={stats.topLanguages} />
-            <TopList title={fr.stats.tops.isps} entries={stats.topIsps} />
+            <TopList title={en.stats.tops.countries} entries={stats.topCountries} />
+            <TopList title={en.stats.tops.cities} entries={stats.topCities} />
+            <TopList title={en.stats.tops.devices} entries={stats.topDevices} />
+            <TopList title={en.stats.tops.os} entries={stats.topOs} />
+            <TopList title={en.stats.tops.browsers} entries={stats.topBrowsers} />
+            <TopList title={en.stats.tops.languages} entries={stats.topLanguages} />
+            <TopList title={en.stats.tops.isps} entries={stats.topIsps} />
           </div>
 
           <ManagePanel

@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router";
 
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 import { downloadBlob } from "../lib/download.js";
 import { exportCodesJson, importCodesJson, loadCodes, removeCode } from "../lib/storage.js";
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
+  return new Date(iso).toLocaleDateString("en-GB", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -31,7 +31,7 @@ export function CodesPage() {
           return;
         }
         setCodes(loadCodes());
-        setMessage(fr.codes.importSuccess(added));
+        setMessage(en.codes.importSuccess(added));
       })
       .catch(() => {
         setImportError(true);
@@ -40,8 +40,8 @@ export function CodesPage() {
 
   return (
     <>
-      <h1>{fr.codes.title}</h1>
-      <p className="muted">{fr.codes.intro}</p>
+      <h1>{en.codes.title}</h1>
+      <p className="muted">{en.codes.intro}</p>
 
       <div className="actions-row">
         <button
@@ -53,7 +53,7 @@ export function CodesPage() {
             );
           }}
         >
-          {fr.codes.export}
+          {en.codes.export}
         </button>
         <button
           type="button"
@@ -61,14 +61,14 @@ export function CodesPage() {
             fileInputRef.current?.click();
           }}
         >
-          {fr.codes.import}
+          {en.codes.import}
         </button>
         <input
           ref={fileInputRef}
           type="file"
           accept="application/json,.json"
           hidden
-          aria-label={fr.codes.import}
+          aria-label={en.codes.import}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file !== undefined) onImportFile(file);
@@ -84,27 +84,27 @@ export function CodesPage() {
       )}
       {importError && (
         <p className="error-box" role="alert">
-          {fr.codes.importError}
+          {en.codes.importError}
         </p>
       )}
 
       {codes.length === 0 ? (
-        <p className="card">{fr.codes.empty}</p>
+        <p className="card">{en.codes.empty}</p>
       ) : (
         <div className="table-wrap card">
           <table>
             <thead>
               <tr>
-                <th scope="col">{fr.codes.columns.label}</th>
-                <th scope="col">{fr.codes.columns.slug}</th>
-                <th scope="col">{fr.codes.columns.created}</th>
-                <th scope="col">{fr.codes.columns.actions}</th>
+                <th scope="col">{en.codes.columns.label}</th>
+                <th scope="col">{en.codes.columns.slug}</th>
+                <th scope="col">{en.codes.columns.created}</th>
+                <th scope="col">{en.codes.columns.actions}</th>
               </tr>
             </thead>
             <tbody>
               {codes.map((code) => (
                 <tr key={code.slug}>
-                  <td>{code.label ?? fr.codes.noLabel}</td>
+                  <td>{code.label ?? en.codes.noLabel}</td>
                   <td>
                     <code>{code.slug}</code>
                   </td>
@@ -112,19 +112,19 @@ export function CodesPage() {
                   <td>
                     <div className="actions-row">
                       <Link className="button" to={`/stats/${code.slug}/${code.secretKey}`}>
-                        {fr.codes.open}
+                        {en.codes.open}
                       </Link>
                       <button
                         type="button"
                         className="danger"
                         onClick={() => {
-                          if (window.confirm(fr.codes.removeConfirm)) {
+                          if (window.confirm(en.codes.removeConfirm)) {
                             removeCode(code.slug);
                             setCodes(loadCodes());
                           }
                         }}
                       >
-                        {fr.codes.remove}
+                        {en.codes.remove}
                       </button>
                     </div>
                   </td>

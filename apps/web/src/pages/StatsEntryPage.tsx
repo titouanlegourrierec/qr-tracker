@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { useNavigate } from "react-router";
 
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 
 /** Manual access to a dashboard: slug + secret key typed by hand. */
 export function StatsEntryPage() {
@@ -17,7 +17,7 @@ export function StatsEntryPage() {
     const cleanSlug = slug.trim();
     const cleanKey = key.trim();
     if (!slugSchema.safeParse(cleanSlug).success || !secretKeySchema.safeParse(cleanKey).success) {
-      setError(fr.statsEntry.invalid);
+      setError(en.statsEntry.invalid);
       return;
     }
     // The key only ever lives in the URL fragment (hash routing) — never sent to a server.
@@ -26,11 +26,11 @@ export function StatsEntryPage() {
 
   return (
     <>
-      <h1>{fr.statsEntry.title}</h1>
-      <p className="muted">{fr.statsEntry.intro}</p>
+      <h1>{en.statsEntry.title}</h1>
+      <p className="muted">{en.statsEntry.intro}</p>
       <form className="card" onSubmit={onSubmit}>
         <label className="field">
-          <span>{fr.statsEntry.slugLabel}</span>
+          <span>{en.statsEntry.slugLabel}</span>
           <input
             type="text"
             value={slug}
@@ -43,7 +43,7 @@ export function StatsEntryPage() {
           />
         </label>
         <label className="field">
-          <span>{fr.statsEntry.keyLabel}</span>
+          <span>{en.statsEntry.keyLabel}</span>
           <input
             type="password"
             value={key}
@@ -60,7 +60,7 @@ export function StatsEntryPage() {
           </p>
         )}
         <button type="submit" className="primary">
-          {fr.statsEntry.submit}
+          {en.statsEntry.submit}
         </button>
       </form>
     </>

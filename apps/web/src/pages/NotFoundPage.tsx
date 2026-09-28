@@ -1,14 +1,14 @@
 import { Link } from "react-router";
 
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 
 export function NotFoundPage() {
   return (
     <>
-      <h1>{fr.notFound.title}</h1>
-      <p>{fr.notFound.body}</p>
+      <h1>{en.notFound.title}</h1>
+      <p>{en.notFound.body}</p>
       <p>
-        <Link to="/">{fr.notFound.home}</Link>
+        <Link to="/">{en.notFound.home}</Link>
       </p>
     </>
   );

@@ -18,37 +18,37 @@ function renderAt(path: string) {
 describe("App shell", () => {
   it("renders the create page and navigation landmarks", () => {
     renderAt("/");
-    expect(screen.getByRole("heading", { level: 1, name: "Créer un QR code" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Navigation principale" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Create a QR code" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeInTheDocument();
     expect(screen.getByRole("main")).toBeInTheDocument();
   });
 
-  it("renders the privacy page in French", () => {
-    renderAt("/confidentialite");
-    expect(screen.getByRole("heading", { level: 1, name: "Confidentialité" })).toBeInTheDocument();
-    expect(screen.getByText(/Aucune adresse IP n'est enregistrée/)).toBeInTheDocument();
+  it("renders the privacy page", () => {
+    renderAt("/privacy");
+    expect(screen.getByRole("heading", { level: 1, name: "Privacy" })).toBeInTheDocument();
+    expect(screen.getByText(/No IP address is ever stored/)).toBeInTheDocument();
   });
 
   it("renders a 404 page for unknown routes", () => {
-    renderAt("/nimporte-quoi");
-    expect(screen.getByRole("heading", { name: "Page introuvable" })).toBeInTheDocument();
+    renderAt("/no-such-page");
+    expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
   });
 
   it("navigates from the manual stats entry form to the dashboard route", async () => {
     const user = userEvent.setup();
     renderAt("/stats");
-    await user.type(screen.getByLabelText(/Code du lien/), SLUG);
-    await user.type(screen.getByLabelText(/Clé secrète/), KEY);
-    await user.click(screen.getByRole("button", { name: "Voir les statistiques" }));
-    expect(screen.getByRole("heading", { level: 1, name: "Statistiques" })).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/Link code/), SLUG);
+    await user.type(screen.getByLabelText(/Secret key/), KEY);
+    await user.click(screen.getByRole("button", { name: "Show statistics" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Statistics" })).toBeInTheDocument();
   });
 
   it("shows a validation error for malformed slug/key", async () => {
     const user = userEvent.setup();
     renderAt("/stats");
-    await user.type(screen.getByLabelText(/Code du lien/), "bad");
-    await user.type(screen.getByLabelText(/Clé secrète/), "short");
-    await user.click(screen.getByRole("button", { name: "Voir les statistiques" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("format invalide");
+    await user.type(screen.getByLabelText(/Link code/), "bad");
+    await user.type(screen.getByLabelText(/Secret key/), "short");
+    await user.click(screen.getByRole("button", { name: "Show statistics" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Badly formatted");
   });
 });

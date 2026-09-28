@@ -1,12 +1,12 @@
 import type { TopEntry } from "@qr-tracker/shared";
 
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 
 /** Maps raw dimension values to display labels (device types are localized). */
 function display(value: string | null): string {
-  if (value === null) return fr.stats.tops.unknown;
-  if (value in fr.stats.devices) {
-    return fr.stats.devices[value as keyof typeof fr.stats.devices];
+  if (value === null) return en.stats.tops.unknown;
+  if (value in en.stats.devices) {
+    return en.stats.devices[value as keyof typeof en.stats.devices];
   }
   return value;
 }
@@ -16,7 +16,7 @@ export function TopList({ title, entries }: { title: string; entries: TopEntry[]
     <div className="card">
       <h2>{title}</h2>
       {entries.length === 0 ? (
-        <p className="muted">{fr.stats.empty}</p>
+        <p className="muted">{en.stats.empty}</p>
       ) : (
         <table>
           <caption className="muted" style={{ captionSide: "top", textAlign: "left" }}>
@@ -27,7 +27,7 @@ export function TopList({ title, entries }: { title: string; entries: TopEntry[]
               <tr key={entry.value ?? "__null__"}>
                 <th scope="row">{display(entry.value)}</th>
                 <td>
-                  {entry.count} {fr.stats.tops.scans}
+                  {entry.count} {en.stats.tops.scans}
                 </td>
               </tr>
             ))}

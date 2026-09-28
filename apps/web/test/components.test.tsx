@@ -6,17 +6,17 @@ import { CopyButton } from "../src/components/CopyButton.js";
 import { qrSvg } from "../src/lib/qr.js";
 
 describe("CopyButton", () => {
-  it("copies the value and confirms in French", async () => {
+  it("copies the value and confirms", async () => {
     const user = userEvent.setup();
     render(<CopyButton value="https://example.com/r/abc" />);
-    await user.click(screen.getByRole("button", { name: "Copier" }));
-    expect(await screen.findByText("Copié !")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Copy" }));
+    expect(await screen.findByText("Copied!")).toBeInTheDocument();
     expect(await window.navigator.clipboard.readText()).toBe("https://example.com/r/abc");
   });
 
   it("accepts a custom label", () => {
-    render(<CopyButton value="x" label="Copier la clé" />);
-    expect(screen.getByRole("button", { name: "Copier la clé" })).toBeInTheDocument();
+    render(<CopyButton value="x" label="Copy key" />);
+    expect(screen.getByRole("button", { name: "Copy key" })).toBeInTheDocument();
   });
 });
 

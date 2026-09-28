@@ -6,7 +6,7 @@ import { Link } from "react-router";
 
 import { CopyButton } from "../components/CopyButton.js";
 import { useTurnstile } from "../hooks/useTurnstile.js";
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 import { api, ApiRequestError } from "../lib/api.js";
 import { downloadBlob, downloadUrl } from "../lib/download.js";
 import { qrPngDataUrl, qrSvg } from "../lib/qr.js";
@@ -37,9 +37,9 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
   }, [created.shortUrl]);
 
   return (
-    <section aria-label={fr.create.success}>
+    <section aria-label={en.create.success}>
       <p className="success-box" role="status">
-        {fr.create.success}
+        {en.create.success}
       </p>
 
       <div className="card">
@@ -47,11 +47,11 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
           {svg !== null && (
             <img
               src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`}
-              alt={`QR code vers ${created.shortUrl}`}
+              alt={en.create.qrAlt(created.shortUrl)}
             />
           )}
           <div>
-            <p className="muted">{fr.create.shortLink}</p>
+            <p className="muted">{en.create.shortLink}</p>
             <div className="copy-row">
               <code>{created.shortUrl}</code>
               <CopyButton value={created.shortUrl} />
@@ -65,7 +65,7 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
                   });
                 }}
               >
-                {fr.create.downloadPng}
+                {en.create.downloadPng}
               </button>
               <button
                 type="button"
@@ -78,7 +78,7 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
                   });
                 }}
               >
-                {fr.create.downloadSvg}
+                {en.create.downloadSvg}
               </button>
             </div>
           </div>
@@ -86,8 +86,8 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
       </div>
 
       <div className="warning-box">
-        <h2>{fr.create.keyTitle}</h2>
-        <p>{fr.create.keyWarning}</p>
+        <h2>{en.create.keyTitle}</h2>
+        <p>{en.create.keyWarning}</p>
         <div className="copy-row">
           <code>{created.secretKey}</code>
           <CopyButton value={created.secretKey} />
@@ -95,14 +95,14 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
       </div>
 
       <div className="card">
-        <p>{fr.create.statsLink}</p>
+        <p>{en.create.statsLink}</p>
         <div className="copy-row">
           <code>{statsUrl}</code>
           <CopyButton value={statsUrl} />
         </div>
-        <p className="muted">{fr.create.statsLinkHint}</p>
+        <p className="muted">{en.create.statsLinkHint}</p>
         <p className="muted">
-          {fr.create.savedLocally} (<Link to="/codes">{fr.app.nav.codes}</Link>)
+          {en.create.savedLocally} (<Link to="/codes">{en.app.nav.codes}</Link>)
         </p>
       </div>
     </section>
@@ -128,7 +128,7 @@ export function CreatePage() {
 
     const cleanUrl = targetUrl.trim();
     if (!validateTargetUrl(cleanUrl).ok) {
-      setError(fr.create.urlInvalid);
+      setError(en.create.urlInvalid);
       return;
     }
     if (turnstileToken === null) return;
@@ -151,7 +151,7 @@ export function CreatePage() {
         setCreated(response);
       })
       .catch((err: unknown) => {
-        setError(err instanceof ApiRequestError ? fr.errors[err.code] : fr.app.error);
+        setError(err instanceof ApiRequestError ? en.errors[err.code] : en.app.error);
         resetTurnstile();
       })
       .finally(() => {
@@ -162,7 +162,7 @@ export function CreatePage() {
   if (created !== null) {
     return (
       <>
-        <h1>{fr.create.title}</h1>
+        <h1>{en.create.title}</h1>
         <CreationResult created={created} />
       </>
     );
@@ -170,30 +170,30 @@ export function CreatePage() {
 
   return (
     <>
-      <h1>{fr.create.title}</h1>
-      <p className="muted">{fr.create.intro}</p>
+      <h1>{en.create.title}</h1>
+      <p className="muted">{en.create.intro}</p>
       <form className="card" onSubmit={onSubmit}>
         <label className="field">
-          <span>{fr.create.urlLabel}</span>
+          <span>{en.create.urlLabel}</span>
           <input
             type="url"
             value={targetUrl}
             onChange={(e) => {
               setTargetUrl(e.target.value);
             }}
-            placeholder={fr.create.urlPlaceholder}
+            placeholder={en.create.urlPlaceholder}
             required
           />
         </label>
         <label className="field">
-          <span>{fr.create.labelLabel}</span>
+          <span>{en.create.labelLabel}</span>
           <input
             type="text"
             value={label}
             onChange={(e) => {
               setLabel(e.target.value);
             }}
-            placeholder={fr.create.labelPlaceholder}
+            placeholder={en.create.labelPlaceholder}
             maxLength={100}
           />
         </label>
@@ -201,12 +201,12 @@ export function CreatePage() {
         <div ref={turnstileRef} />
         {turnstileFailed && (
           <p className="error-box" role="alert">
-            {fr.errors.TURNSTILE_FAILED}
+            {en.errors.TURNSTILE_FAILED}
           </p>
         )}
         {!turnstileFailed && turnstileToken === null && (
           <p className="muted" role="status">
-            {fr.create.turnstileLoading}
+            {en.create.turnstileLoading}
           </p>
         )}
 
@@ -217,7 +217,7 @@ export function CreatePage() {
         )}
 
         <button type="submit" className="primary" disabled={submitting || turnstileToken === null}>
-          {submitting ? fr.create.creating : fr.create.submit}
+          {submitting ? en.create.creating : en.create.submit}
         </button>
       </form>
     </>

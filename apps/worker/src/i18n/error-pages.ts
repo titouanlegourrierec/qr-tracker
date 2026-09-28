@@ -1,8 +1,8 @@
-/** Friendly French HTML pages served on /r/:slug errors. */
+/** Friendly HTML pages served on /r/:slug errors. */
 
 function page(title: string, heading: string, message: string): string {
   return `<!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,13 +27,13 @@ function page(title: string, heading: string, message: string): string {
 }
 
 export const NOT_FOUND_PAGE = page(
-  "Lien introuvable",
-  "Ce lien n'existe pas",
-  "Ce QR code ne correspond à aucun lien connu. Il a peut-être été supprimé par son propriétaire.",
+  "Link not found",
+  "This link does not exist",
+  "This QR code does not match any known link. It may have been deleted by its owner.",
 );
 
 export const DISABLED_PAGE = page(
-  "Lien désactivé",
-  "Ce lien est désactivé",
-  "Le propriétaire de ce QR code a temporairement désactivé la redirection. Réessayez plus tard.",
+  "Link disabled",
+  "This link is disabled",
+  "The owner of this QR code has temporarily disabled the redirect. Please try again later.",
 );

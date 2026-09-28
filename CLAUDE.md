@@ -15,8 +15,8 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 ## Conventions
 
 - Conventional Commits (enforced by commitlint). One commit per milestone minimum.
-- Code, comments, commits, dev docs: **English**. UI strings: **French**, centralized in
-  `apps/web/src/i18n/fr.ts`. User guide in French: `docs/guide-utilisateur.md`.
+- Everything is **English** — code, comments, commits, docs and UI strings. UI strings
+  are centralized in `apps/web/src/i18n/en.ts`. User guide: `docs/user-guide.md`.
 - Never disable lint rules / skip tests / use `any` / `@ts-ignore` / `@ts-expect-error` to
   make checks pass. Justify any truly unavoidable exception inline.
 - Worker layering: routes → services → repositories; pure logic in `src/lib/` (unit-tested).

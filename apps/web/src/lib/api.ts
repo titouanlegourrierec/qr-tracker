@@ -18,7 +18,7 @@ import { API_URL } from "../config.js";
 
 export type ApiErrorCode = ErrorCode | "NETWORK";
 
-/** Error thrown by every API helper; `code` maps to a French message in fr.errors. */
+/** Error thrown by every API helper; `code` maps to a user-facing message in en.errors. */
 export class ApiRequestError extends Error {
   readonly code: ApiErrorCode;
 

@@ -23,15 +23,15 @@ function renderPage() {
 describe("CodesPage", () => {
   it("shows an empty state", () => {
     renderPage();
-    expect(screen.getByText(/Aucun QR code enregistré/)).toBeInTheDocument();
+    expect(screen.getByText(/No QR codes saved/)).toBeInTheDocument();
   });
 
   it("lists stored codes with a stats link carrying the key in the route", () => {
-    seed("aaaaaaa", "Affiche B");
+    seed("aaaaaaa", "Poster B");
     renderPage();
-    expect(screen.getByText("Affiche B")).toBeInTheDocument();
+    expect(screen.getByText("Poster B")).toBeInTheDocument();
     // MemoryRouter renders plain hrefs; in production HashRouter prefixes "#".
-    const link = screen.getByRole("link", { name: "Statistiques" });
+    const link = screen.getByRole("link", { name: "Statistics" });
     expect(link).toHaveAttribute("href", `/stats/aaaaaaa/${KEY}`);
   });
 
@@ -40,9 +40,9 @@ describe("CodesPage", () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     renderPage();
-    await user.click(screen.getByRole("button", { name: "Retirer de la liste" }));
+    await user.click(screen.getByRole("button", { name: "Remove from list" }));
     expect(loadCodes()).toHaveLength(0);
-    expect(screen.getByText(/Aucun QR code enregistré/)).toBeInTheDocument();
+    expect(screen.getByText(/No QR codes saved/)).toBeInTheDocument();
   });
 
   it("imports a JSON backup", async () => {
@@ -53,24 +53,24 @@ describe("CodesPage", () => {
       items: [
         {
           slug: "bbbbbbb",
-          label: "Importé",
+          label: "Imported",
           secretKey: KEY,
           createdAt: "2026-09-01T00:00:00.000Z",
         },
       ],
     });
     const file = new File([payload], "backup.json", { type: "application/json" });
-    await user.upload(screen.getByLabelText("Importer (JSON)"), file);
+    await user.upload(screen.getByLabelText("Import (JSON)"), file);
 
-    expect(await screen.findByText("1 QR code(s) importé(s).")).toBeInTheDocument();
-    expect(screen.getByText("Importé")).toBeInTheDocument();
+    expect(await screen.findByText("1 QR code imported.")).toBeInTheDocument();
+    expect(screen.getByText("Imported")).toBeInTheDocument();
   });
 
   it("reports invalid import files", async () => {
     const user = userEvent.setup();
     renderPage();
     const file = new File(["{broken"], "bad.json", { type: "application/json" });
-    await user.upload(screen.getByLabelText("Importer (JSON)"), file);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Fichier invalide");
+    await user.upload(screen.getByLabelText("Import (JSON)"), file);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid file");
   });
 });

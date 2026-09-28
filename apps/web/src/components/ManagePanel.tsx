@@ -4,12 +4,12 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { useNavigate } from "react-router";
 
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 import { api, ApiRequestError } from "../lib/api.js";
 import { removeCode } from "../lib/storage.js";
 
 function errorMessage(err: unknown): string {
-  return err instanceof ApiRequestError ? fr.errors[err.code] : fr.app.error;
+  return err instanceof ApiRequestError ? en.errors[err.code] : en.app.error;
 }
 
 export interface ManagePanelProps {
@@ -44,12 +44,12 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
     event.preventDefault();
     const clean = targetUrl.trim();
     if (!validateTargetUrl(clean).ok) {
-      setError(fr.create.urlInvalid);
+      setError(en.create.urlInvalid);
       return;
     }
     run(async () => {
       onUpdated(await api.updateLink(link.slug, secretKey, { targetUrl: clean }));
-      setMessage(fr.stats.manage.saved);
+      setMessage(en.stats.manage.saved);
     });
   }
 
@@ -61,7 +61,7 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
   }
 
   function onDelete() {
-    if (!window.confirm(fr.stats.manage.deleteConfirm)) return;
+    if (!window.confirm(en.stats.manage.deleteConfirm)) return;
     run(async () => {
       await api.deleteLink(link.slug, secretKey);
       removeCode(link.slug);
@@ -70,11 +70,11 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
   }
 
   return (
-    <section className="card" aria-label={fr.stats.manage.title}>
-      <h2>{fr.stats.manage.title}</h2>
+    <section className="card" aria-label={en.stats.manage.title}>
+      <h2>{en.stats.manage.title}</h2>
 
-      {blocked && <p className="badge">{fr.stats.manage.blockedBadge}</p>}
-      {link.status === "disabled" && <p className="badge">{fr.stats.manage.disabledBadge}</p>}
+      {blocked && <p className="badge">{en.stats.manage.blockedBadge}</p>}
+      {link.status === "disabled" && <p className="badge">{en.stats.manage.disabledBadge}</p>}
 
       {message !== null && (
         <p className="success-box" role="status">
@@ -91,7 +91,7 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
         <>
           <form onSubmit={onSave}>
             <label className="field">
-              <span>{fr.stats.manage.targetLabel}</span>
+              <span>{en.stats.manage.targetLabel}</span>
               <input
                 type="url"
                 value={targetUrl}
@@ -103,10 +103,10 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
             </label>
             <div className="actions-row">
               <button type="submit" className="primary" disabled={busy}>
-                {fr.stats.manage.save}
+                {en.stats.manage.save}
               </button>
               <button type="button" disabled={busy} onClick={onToggleStatus}>
-                {link.status === "active" ? fr.stats.manage.disable : fr.stats.manage.enable}
+                {link.status === "active" ? en.stats.manage.disable : en.stats.manage.enable}
               </button>
             </div>
           </form>
@@ -115,7 +115,7 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
 
       <div className="actions-row">
         <button type="button" className="danger" disabled={busy} onClick={onDelete}>
-          {fr.stats.manage.delete}
+          {en.stats.manage.delete}
         </button>
       </div>
     </section>

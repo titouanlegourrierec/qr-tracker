@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { fr } from "../i18n/fr.js";
+import { en } from "../i18n/en.js";
 
 /** Copies a value to the clipboard with an accessible confirmation. */
 export function CopyButton({ value, label }: { value: string; label?: string }) {
@@ -27,7 +27,7 @@ export function CopyButton({ value, label }: { value: string; label?: string }) 
         });
       }}
     >
-      <span aria-live="polite">{copied ? fr.app.copied : (label ?? fr.app.copy)}</span>
+      <span aria-live="polite">{copied ? en.app.copied : (label ?? en.app.copy)}</span>
     </button>
   );
 }

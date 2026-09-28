@@ -22,7 +22,7 @@ function makeLink(overrides: Partial<Link> = {}): Link {
   return {
     slug: SLUG,
     targetUrl: "https://example.org/page",
-    label: "Affiche B",
+    label: "Poster B",
     status: "active",
     createdAt: "2026-09-01T00:00:00.000Z",
     updatedAt: "2026-09-01T00:00:00.000Z",
@@ -59,18 +59,18 @@ describe("StatsPage", () => {
     renderPage();
 
     expect(
-      await screen.findByRole("heading", { name: /Statistiques — Affiche B/ }),
+      await screen.findByRole("heading", { name: /Statistics — Poster B/ }),
     ).toBeInTheDocument();
     expect(screen.getByText("42")).toBeInTheDocument();
     expect(screen.getByText("17")).toBeInTheDocument();
 
     // Charts (mocked canvas) each pair with an accessible data table.
     expect((await screen.findAllByTestId("chart-canvas")).length).toBeGreaterThanOrEqual(3);
-    expect(screen.getAllByText("Données du graphique en tableau").length).toBeGreaterThanOrEqual(3);
-    expect(screen.getByRole("heading", { name: "Scans par jour" })).toBeInTheDocument();
+    expect(screen.getAllByText("Chart data as a table").length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByRole("heading", { name: "Scans per day" })).toBeInTheDocument();
 
     // Tops: unknown values are localized, device types translated.
-    expect(screen.getByText("Inconnu")).toBeInTheDocument();
+    expect(screen.getByText("Unknown")).toBeInTheDocument();
     expect(screen.getByText("Mobile")).toBeInTheDocument();
     expect(screen.getByText("Orange")).toBeInTheDocument();
   });
@@ -81,7 +81,7 @@ describe("StatsPage", () => {
     renderPage();
     await screen.findByText("42");
 
-    await user.click(screen.getByRole("checkbox", { name: /Inclure les robots/ }));
+    await user.click(screen.getByRole("checkbox", { name: /Include bots/ }));
     await waitFor(() => {
       expect(seen.statsUrls.some((u) => u.includes("includeBots=true"))).toBe(true);
     });
@@ -93,13 +93,13 @@ describe("StatsPage", () => {
     renderPage();
     await screen.findByText("42");
 
-    await user.click(screen.getByRole("button", { name: "7 jours" }));
+    await user.click(screen.getByRole("button", { name: "7 days" }));
     await waitFor(() => {
       expect(seen.statsUrls.some((u) => u.includes("from=") && u.includes("to="))).toBe(true);
     });
   });
 
-  it("shows the French error for a wrong key", async () => {
+  it("shows a friendly error for a wrong key", async () => {
     server.use(
       http.get(`${API}/api/links/${SLUG}`, () =>
         HttpResponse.json(
@@ -115,12 +115,12 @@ describe("StatsPage", () => {
       ),
     );
     renderPage();
-    expect(await screen.findByRole("alert")).toHaveTextContent("Clé secrète invalide");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid secret key");
   });
 
   it("rejects malformed route params without calling the API", () => {
     renderPage("bad", "short");
-    expect(screen.getByRole("alert")).toHaveTextContent("format invalide");
+    expect(screen.getByRole("alert")).toHaveTextContent("Badly formatted");
   });
 
   it("updates the destination from the manage panel", async () => {
@@ -136,12 +136,12 @@ describe("StatsPage", () => {
     renderPage();
     await screen.findByText("42");
 
-    const input = screen.getByLabelText("Adresse de destination");
+    const input = screen.getByLabelText("Destination address");
     await user.clear(input);
     await user.type(input, "https://updated.example.org/x");
-    await user.click(screen.getByRole("button", { name: "Enregistrer" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Destination mise à jour.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Destination updated.");
   });
 
   it("toggles the disabled status and shows the badge", async () => {
@@ -155,9 +155,9 @@ describe("StatsPage", () => {
     renderPage();
     await screen.findByText("42");
 
-    await user.click(screen.getByRole("button", { name: "Désactiver le lien" }));
-    expect(await screen.findByText("Désactivé")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Réactiver le lien" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Disable link" }));
+    expect(await screen.findByText("Disabled")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Re-enable link" })).toBeInTheDocument();
   });
 
   it("hides editing for admin-blocked links but keeps delete", async () => {
@@ -165,9 +165,9 @@ describe("StatsPage", () => {
     renderPage();
     await screen.findByText("42");
 
-    expect(screen.getByText("Bloqué par l'administrateur")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Enregistrer" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Supprimer définitivement" })).toBeInTheDocument();
+    expect(screen.getByText("Blocked by the administrator")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete permanently" })).toBeInTheDocument();
   });
 
   it("deletes the link, removes it from the local list and navigates away", async () => {
@@ -181,7 +181,7 @@ describe("StatsPage", () => {
     renderPage();
     await screen.findByText("42");
 
-    await user.click(screen.getByRole("button", { name: "Supprimer définitivement" }));
+    await user.click(screen.getByRole("button", { name: "Delete permanently" }));
     expect(await screen.findByText("codes-page")).toBeInTheDocument();
     expect(loadCodes()).toHaveLength(0);
   });
@@ -195,6 +195,6 @@ describe("StatsPage", () => {
       }),
     );
     renderPage();
-    expect(await screen.findByText("Aucun scan sur cette période.")).toBeInTheDocument();
+    expect(await screen.findByText("No scans in this period.")).toBeInTheDocument();
   });
 });

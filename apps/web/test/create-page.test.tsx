@@ -54,7 +54,7 @@ describe("CreatePage", () => {
       http.post(`${API}/api/links`, async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>;
         expect(body.turnstileToken).toBe("test-token");
-        expect(body.label).toBe("Affiche");
+        expect(body.label).toBe("Poster");
         return HttpResponse.json(
           { slug: SLUG, shortUrl: `${API}/r/${SLUG}`, secretKey: KEY },
           { status: 201 },
@@ -63,40 +63,40 @@ describe("CreatePage", () => {
     );
 
     renderPage();
-    const submit = screen.getByRole("button", { name: "Créer le QR code" });
+    const submit = screen.getByRole("button", { name: "Create QR code" });
     await waitFor(() => {
       expect(submit).toBeEnabled();
     });
 
-    await user.type(screen.getByLabelText(/Adresse de destination/), "https://example.org/page");
-    await user.type(screen.getByLabelText(/Nom/), "Affiche");
+    await user.type(screen.getByLabelText(/Destination address/), "https://example.org/page");
+    await user.type(screen.getByLabelText(/Name/), "Poster");
     await user.click(submit);
 
-    expect(await screen.findByRole("status")).toHaveTextContent("QR code créé !");
-    expect(screen.getByText(/affichée une seule fois/)).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent("QR code created!");
+    expect(screen.getByText(/shown only once/)).toBeInTheDocument();
     expect(screen.getByText(KEY)).toBeInTheDocument();
-    expect(screen.getByAltText(`QR code vers ${API}/r/${SLUG}`)).toBeInTheDocument();
+    expect(screen.getByAltText(`QR code for ${API}/r/${SLUG}`)).toBeInTheDocument();
     // The private stats link keeps the key in the fragment.
     expect(screen.getByText(new RegExp(`#/stats/${SLUG}/`))).toBeInTheDocument();
 
     // Saved to the local list.
     const codes = loadCodes();
     expect(codes).toHaveLength(1);
-    expect(codes[0]).toMatchObject({ slug: SLUG, secretKey: KEY, label: "Affiche" });
+    expect(codes[0]).toMatchObject({ slug: SLUG, secretKey: KEY, label: "Poster" });
   });
 
   it("pre-validates the URL client-side", async () => {
     const user = userEvent.setup();
     renderPage();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Créer le QR code" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Create QR code" })).toBeEnabled();
     });
-    await user.type(screen.getByLabelText(/Adresse de destination/), "http://localhost:3000");
-    await user.click(screen.getByRole("button", { name: "Créer le QR code" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Adresse invalide");
+    await user.type(screen.getByLabelText(/Destination address/), "http://localhost:3000");
+    await user.click(screen.getByRole("button", { name: "Create QR code" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Invalid address");
   });
 
-  it("shows the French message for API errors and resets Turnstile", async () => {
+  it("shows a friendly message for API errors and resets Turnstile", async () => {
     const user = userEvent.setup();
     server.use(
       http.post(`${API}/api/links`, () =>
@@ -108,12 +108,12 @@ describe("CreatePage", () => {
     );
     renderPage();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Créer le QR code" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Create QR code" })).toBeEnabled();
     });
-    await user.type(screen.getByLabelText(/Adresse de destination/), "https://example.org");
-    await user.click(screen.getByRole("button", { name: "Créer le QR code" }));
+    await user.type(screen.getByLabelText(/Destination address/), "https://example.org");
+    await user.click(screen.getByRole("button", { name: "Create QR code" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Trop de requêtes");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many requests");
     expect(resetSpy).toHaveBeenCalled();
   });
 
@@ -124,7 +124,7 @@ describe("CreatePage", () => {
       remove: vi.fn(),
     };
     renderPage();
-    expect(screen.getByRole("button", { name: "Créer le QR code" })).toBeDisabled();
-    expect(screen.getByText(/Vérification anti-robot/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create QR code" })).toBeDisabled();
+    expect(screen.getByText(/Anti-bot verification/)).toBeInTheDocument();
   });
 });

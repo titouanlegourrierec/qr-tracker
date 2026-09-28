@@ -120,20 +120,20 @@ describe("GET /r/:slug", () => {
     expect(res.headers.get("Location")).toBe("https://example.com/dest");
   });
 
-  it("serves a French 404 page for unknown slugs", async () => {
+  it("serves a friendly 404 page for unknown slugs", async () => {
     const res = await scanOnce("zzzzzzz", {});
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("text/html");
     const html = await res.text();
-    expect(html).toContain('lang="fr"');
-    expect(html).toContain("n'existe pas");
+    expect(html).toContain('lang="en"');
+    expect(html).toContain("does not exist");
   });
 
-  it("serves a French 410 page for disabled links without recording scans", async () => {
+  it("serves a friendly 410 page for disabled links without recording scans", async () => {
     const id = await insertTestLink("offlink", "disabled");
     const res = await scanOnce("offlink", { "User-Agent": HUMAN_UAS.macSafari ?? "" });
     expect(res.status).toBe(410);
-    expect(await res.text()).toContain("désactivé");
+    expect(await res.text()).toContain("disabled");
 
     const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM scans WHERE link_id = ?1")
       .bind(id)
