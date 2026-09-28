@@ -37,7 +37,8 @@ export function redirectRoutes(): Hono<AppBindings> {
     if (link === null) {
       return c.html(NOT_FOUND_PAGE, 404);
     }
-    if (link.status === "disabled") {
+    if (link.status !== "active") {
+      // Covers both owner-disabled and admin-blocked links.
       return c.html(DISABLED_PAGE, 410);
     }
 

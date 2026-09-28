@@ -31,7 +31,8 @@ const baseUrl =
   process.env.WORKER_URL ??
   "http://localhost:8787";
 
-const status = command === "disable" ? "disabled" : "active";
+// Admin "disable" sets the blocked status, which the owner cannot lift.
+const status = command === "disable" ? "blocked" : "active";
 const response = await fetch(`${baseUrl}/api/admin/links/${slug}/status`, {
   method: "POST",
   headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

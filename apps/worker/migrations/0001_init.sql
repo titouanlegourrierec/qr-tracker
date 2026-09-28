@@ -8,7 +8,7 @@ CREATE TABLE links (
   target_url  TEXT NOT NULL,
   label       TEXT,
   secret_hash TEXT NOT NULL,
-  status      TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'disabled')),
+  status      TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'disabled', 'blocked')),
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL
 );

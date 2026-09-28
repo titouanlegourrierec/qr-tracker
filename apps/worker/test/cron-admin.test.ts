@@ -5,7 +5,7 @@ import {
 } from "cloudflare:test";
 import { env } from "cloudflare:workers";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../src/app.js";
 import worker from "../src/index.js";
@@ -14,6 +14,13 @@ import { parseRetentionDays, runDailyMaintenance } from "../src/services/cron.js
 
 const app = createApp();
 const BASE = "https://qr-tracker.example.workers.dev";
+
+function stubTurnstile(): void {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.resolve(Response.json({ success: true }))),
+  );
+}
 
 async function insertLink(slug: string): Promise<number> {
   const now = new Date().toISOString();
@@ -103,18 +110,18 @@ describe("POST /api/admin/links/:slug/status", () => {
     "Content-Type": "application/json",
   });
 
-  it("disables and re-enables a slug with the admin token", async () => {
+  it("blocks and re-enables a slug with the admin token", async () => {
     await insertLink("admlnk1");
-    const disable = await app.request(
+    const block = await app.request(
       `${BASE}/api/admin/links/admlnk1/status`,
       {
         method: "POST",
         headers: headers("test-admin-token"),
-        body: JSON.stringify({ status: "disabled" }),
+        body: JSON.stringify({ status: "blocked" }),
       },
       env,
     );
-    expect(disable.status).toBe(200);
+    expect(block.status).toBe(200);
 
     // The redirect now serves the French 410 page.
     const redirect = await app.request(`${BASE}/r/admlnk1`, {}, env, createExecutionContext());
@@ -138,7 +145,7 @@ describe("POST /api/admin/links/:slug/status", () => {
     await insertLink("admlnk2");
     const wrongToken = await app.request(
       `${BASE}/api/admin/links/admlnk2/status`,
-      { method: "POST", headers: headers("nope"), body: JSON.stringify({ status: "disabled" }) },
+      { method: "POST", headers: headers("nope"), body: JSON.stringify({ status: "blocked" }) },
       env,
     );
     expect(wrongToken.status).toBe(401);
@@ -159,10 +166,72 @@ describe("POST /api/admin/links/:slug/status", () => {
       {
         method: "POST",
         headers: headers("test-admin-token"),
-        body: JSON.stringify({ status: "disabled" }),
+        body: JSON.stringify({ status: "blocked" }),
       },
       env,
     );
     expect(unknown.status).toBe(404);
+  });
+
+  it("prevents the owner from lifting an admin block", async () => {
+    stubTurnstile();
+    const created = await app.request(
+      `${BASE}/api/links`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "CF-Connecting-IP": crypto.randomUUID() },
+        body: JSON.stringify({ targetUrl: "https://example.com/abuse", turnstileToken: "tok" }),
+      },
+      env,
+    );
+    const { slug, secretKey } = await created.json<{ slug: string; secretKey: string }>();
+
+    const block = await app.request(
+      `${BASE}/api/admin/links/${slug}/status`,
+      {
+        method: "POST",
+        headers: headers("test-admin-token"),
+        body: JSON.stringify({ status: "blocked" }),
+      },
+      env,
+    );
+    expect(block.status).toBe(200);
+
+    // Owner cannot re-activate or edit a blocked link…
+    for (const body of [{ status: "active" }, { targetUrl: "https://example.com/new" }]) {
+      const patch = await app.request(
+        `${BASE}/api/links/${slug}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            "Content-Type": "application/json",
+            "CF-Connecting-IP": crypto.randomUUID(),
+          },
+          body: JSON.stringify(body),
+        },
+        env,
+      );
+      expect(patch.status).toBe(403);
+    }
+    // …and the owner PATCH schema rejects "blocked" as a value outright.
+    const forged = await app.request(
+      `${BASE}/api/links/${slug}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          "Content-Type": "application/json",
+          "CF-Connecting-IP": crypto.randomUUID(),
+        },
+        body: JSON.stringify({ status: "blocked" }),
+      },
+      env,
+    );
+    expect(forged.status).toBe(400);
+
+    // The redirect stays dead.
+    const redirect = await app.request(`${BASE}/r/${slug}`, {}, env, createExecutionContext());
+    expect(redirect.status).toBe(410);
   });
 });

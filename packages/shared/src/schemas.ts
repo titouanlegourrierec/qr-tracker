@@ -16,8 +16,15 @@ export function isValidTimezone(tz: string): boolean {
 export const slugSchema = z.string().regex(/^[0-9A-Za-z]{7}$/);
 export const secretKeySchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 
-export const linkStatusSchema = z.enum(["active", "disabled"]);
+/**
+ * active: redirects normally · disabled: paused by the owner ·
+ * blocked: kill-switched by the operator — only the admin API can set or clear it.
+ */
+export const linkStatusSchema = z.enum(["active", "disabled", "blocked"]);
 export type LinkStatus = z.infer<typeof linkStatusSchema>;
+
+/** Statuses the link owner may set. */
+export const ownerLinkStatusSchema = z.enum(["active", "disabled"]);
 
 const targetUrlFieldSchema = z.string().trim().min(1).max(MAX_TARGET_URL_LENGTH);
 const labelFieldSchema = z.string().trim().min(1).max(MAX_LABEL_LENGTH);
@@ -51,7 +58,7 @@ export type Link = z.infer<typeof linkSchema>;
 export const updateLinkRequestSchema = z
   .object({
     targetUrl: targetUrlFieldSchema.optional(),
-    status: linkStatusSchema.optional(),
+    status: ownerLinkStatusSchema.optional(),
   })
   .refine((body) => body.targetUrl !== undefined || body.status !== undefined, {
     message: "At least one of targetUrl or status is required",
@@ -59,7 +66,7 @@ export const updateLinkRequestSchema = z
 export type UpdateLinkRequest = z.infer<typeof updateLinkRequestSchema>;
 
 export const adminStatusRequestSchema = z.object({
-  status: linkStatusSchema,
+  status: z.enum(["active", "blocked"]),
 });
 export type AdminStatusRequest = z.infer<typeof adminStatusRequestSchema>;
 

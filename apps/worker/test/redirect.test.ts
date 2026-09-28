@@ -111,6 +111,15 @@ describe("GET /r/:slug", () => {
     expect(scan?.is_bot).toBe(1);
   });
 
+  it("answers HEAD requests with the redirect too (previewers often HEAD first)", async () => {
+    await insertTestLink("headlnk");
+    const ctx = createExecutionContext();
+    const res = await app.request(`${BASE}/r/headlnk`, { method: "HEAD" }, env, ctx);
+    await waitOnExecutionContext(ctx);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("https://example.com/dest");
+  });
+
   it("serves a French 404 page for unknown slugs", async () => {
     const res = await scanOnce("zzzzzzz", {});
     expect(res.status).toBe(404);

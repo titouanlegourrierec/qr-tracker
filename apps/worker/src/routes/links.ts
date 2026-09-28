@@ -14,6 +14,7 @@ import { z } from "zod";
 import type { AppBindings } from "../app.js";
 import { ApiError } from "../lib/api-error.js";
 import { toCsv } from "../lib/csv.js";
+import { addDays } from "../lib/timezone.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 import { fetchScansForExport } from "../repositories/stats.js";
 import { authorizeLink, createLink, deleteLink, getLink, updateLink } from "../services/links.js";
@@ -100,7 +101,7 @@ export function linksRoutes(): Hono<AppBindings> {
         link.id,
         {
           ...(query.from !== undefined ? { startIso: `${query.from}T00:00:00.000Z` } : {}),
-          ...(query.to !== undefined ? { endIso: `${query.to}T23:59:59.999Z` } : {}),
+          ...(query.to !== undefined ? { endIso: `${addDays(query.to, 1)}T00:00:00.000Z` } : {}),
         },
         query.includeBots,
         EXPORT_MAX_ROWS,

@@ -82,6 +82,9 @@ export async function updateLink(
   workerHostname: string,
 ) {
   const row = await authorizeLink(db, slug, secretKey);
+  if (row.status === "blocked") {
+    throw new ApiError("FORBIDDEN", "This link was blocked by the operator");
+  }
   if (patch.targetUrl !== undefined) assertValidTargetUrl(patch.targetUrl, workerHostname);
   const nowIso = new Date().toISOString();
   await updateLinkRow(

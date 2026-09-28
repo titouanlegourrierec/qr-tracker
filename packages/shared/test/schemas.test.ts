@@ -175,7 +175,13 @@ describe("response schemas", () => {
 
 describe("adminStatusRequestSchema / errors", () => {
   it("parses admin status changes", () => {
-    expect(adminStatusRequestSchema.safeParse({ status: "disabled" }).success).toBe(true);
+    expect(adminStatusRequestSchema.safeParse({ status: "blocked" }).success).toBe(true);
+    expect(adminStatusRequestSchema.safeParse({ status: "active" }).success).toBe(true);
+    // The admin schema does not accept the owner-only "disabled" value…
+    expect(adminStatusRequestSchema.safeParse({ status: "disabled" }).success).toBe(false);
+    // …and the owner schema rejects the admin-only "blocked" value.
+    expect(updateLinkRequestSchema.safeParse({ status: "blocked" }).success).toBe(false);
+    expect(linkSchema.shape.status.safeParse("blocked").success).toBe(true);
     expect(adminStatusRequestSchema.safeParse({}).success).toBe(false);
   });
 
