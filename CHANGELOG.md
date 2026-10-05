@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-05
+
 ### Added
 
 - World map navigation: zoom with the buttons, Ctrl/⌘ + scroll, trackpad pinch,
@@ -30,6 +32,8 @@ All notable changes to this project are documented here. The format follows
   the 404/410 pages are now `no-store`.
 - Opening another link's private URL from a dashboard kept the previous link's form state:
   saving could write link A's destination into link B.
+- Deployments from `main` failed since 2026-09-29: two separately merged dependency
+  updates had left the lockfile inconsistent.
 
 ### Security
 
@@ -68,5 +72,6 @@ First public release.
 - CI (format, lint, typecheck, unit/integration tests with coverage, Playwright E2E)
   and a deploy pipeline (D1 migrations → worker → GitHub Pages → production smoke test).
 
-[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/titouanlegourrierec/qr-tracker/releases/tag/v1.0.0
