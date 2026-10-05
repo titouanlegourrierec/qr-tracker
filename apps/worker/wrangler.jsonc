@@ -5,6 +5,13 @@
   "compatibility_date": "2026-09-01",
   "observability": {
     "enabled": true,
+    "logs": {
+      // Invocation logs record every request (headers, cf geolocation…) for 3 days, which
+      // would break the "no IP or user-agent is ever logged" promise. Our own structured
+      // console logs (src/lib/log.ts) carry no personal data and stay on.
+      "enabled": true,
+      "invocation_logs": false,
+    },
   },
   "d1_databases": [
     {

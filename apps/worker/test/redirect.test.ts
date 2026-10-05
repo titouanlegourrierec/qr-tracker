@@ -23,13 +23,17 @@ interface ScanRow {
   as_organization: string | null;
 }
 
-async function insertTestLink(slug: string, status = "active"): Promise<number> {
+async function insertTestLink(
+  slug: string,
+  status = "active",
+  targetUrl = "https://example.com/dest",
+): Promise<number> {
   const now = new Date().toISOString();
   const row = await env.DB.prepare(
     `INSERT INTO links (slug, target_url, label, secret_hash, status, created_at, updated_at)
-     VALUES (?1, 'https://example.com/dest', NULL, ?2, ?3, ?4, ?4) RETURNING id`,
+     VALUES (?1, ?5, NULL, ?2, ?3, ?4, ?4) RETURNING id`,
   )
-    .bind(slug, await sha256Hex("k".repeat(43)), status, now)
+    .bind(slug, await sha256Hex("k".repeat(43)), status, now, targetUrl)
     .first<{ id: number }>();
   if (row === null) throw new Error("insert failed");
   return row.id;
@@ -124,6 +128,7 @@ describe("GET /r/:slug", () => {
     const res = await scanOnce("zzzzzzz", {});
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("text/html");
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
     const html = await res.text();
     expect(html).toContain('lang="en"');
     expect(html).toContain("does not exist");
@@ -133,6 +138,8 @@ describe("GET /r/:slug", () => {
     const id = await insertTestLink("offlink", "disabled");
     const res = await scanOnce("offlink", { "User-Agent": HUMAN_UAS.macSafari ?? "" });
     expect(res.status).toBe(410);
+    // Chromium caches a header-less 410 forever, which would outlive a re-enable.
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(await res.text()).toContain("disabled");
 
     const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM scans WHERE link_id = ?1")
@@ -156,5 +163,34 @@ describe("GET /r/:slug", () => {
     } finally {
       await env.DB.prepare("ALTER TABLE scans_backup RENAME TO scans").run();
     }
+  });
+
+  it("sends an absolute Location even for destinations stored raw by older versions", async () => {
+    await insertTestLink("legacy1", "active", "https:/example.com/old");
+    const res = await scanOnce("legacy1", {});
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("https://example.com/old");
+  });
+
+  it("falls back to the last known state when D1 fails, else serves a 503 page", async () => {
+    await insertTestLink("cachelk");
+    expect((await scanOnce("cachelk", {})).status).toBe(302); // this isolate now knows it
+
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(env.DB, "prepare").mockImplementation(() => {
+      throw new Error("D1 daily limit exceeded");
+    });
+
+    const cached = await scanOnce("cachelk", {});
+    expect(cached.status).toBe(302);
+    expect(cached.headers.get("Location")).toBe("https://example.com/dest");
+
+    const unknown = await scanOnce("unseen1", {});
+    expect(unknown.status).toBe(503);
+    expect(unknown.headers.get("Cache-Control")).toBe("no-store");
+    expect(await unknown.text()).toContain("temporarily unavailable");
+
+    const lines = errorSpy.mock.calls.map((call) => String(call[0]));
+    expect(lines.filter((line) => line.includes("link_lookup_failed"))).toHaveLength(2);
   });
 });

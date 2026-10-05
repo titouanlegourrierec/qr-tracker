@@ -8,6 +8,7 @@ import {
   sha256Hex,
   timingSafeEqualHex,
 } from "../src/lib/crypto.js";
+import { LinkCache } from "../src/lib/link-cache.js";
 import { isOverLimit, rateLimitKey, windowStart } from "../src/lib/rate-limit.js";
 import { verifyTurnstile } from "../src/lib/turnstile.js";
 
@@ -113,5 +114,57 @@ describe("checkUrlReputation", () => {
     expect(
       await checkUrlReputation("https://example.com", { URL_REPUTATION_ENABLED: "true" }),
     ).toBe("unknown");
+  });
+});
+
+describe("LinkCache", () => {
+  const link = (slug: string, status: "active" | "disabled" = "active") => ({
+    id: 1,
+    slug,
+    target_url: `https://example.com/${slug}`,
+    status,
+  });
+
+  it("recalls the last remembered state and forgets on demand", () => {
+    const cache = new LinkCache(10, 60_000);
+    expect(cache.recall("aaaaaaa")).toBeNull();
+    cache.remember(link("aaaaaaa"), 0);
+    cache.remember(link("aaaaaaa", "disabled"), 1);
+    expect(cache.recall("aaaaaaa", 2)?.status).toBe("disabled");
+    cache.forget("aaaaaaa");
+    expect(cache.recall("aaaaaaa", 3)).toBeNull();
+  });
+
+  it("never keeps more than the secret-free redirect fields", () => {
+    const cache = new LinkCache(10, 60_000);
+    // A full D1 row carries the secret hash; the cache must drop it.
+    const row = { ...link("bbbbbbb"), secret_hash: "f".repeat(64) };
+    cache.remember(row, 0);
+    expect(Object.keys(cache.recall("bbbbbbb", 0) ?? {}).sort()).toEqual([
+      "id",
+      "slug",
+      "status",
+      "target_url",
+    ]);
+  });
+
+  it("expires entries older than the maximum age", () => {
+    const cache = new LinkCache(10, 1_000);
+    cache.remember(link("ccccccc"), 0);
+    expect(cache.recall("ccccccc", 1_000)).not.toBeNull();
+    expect(cache.recall("ccccccc", 1_001)).toBeNull();
+    expect(cache.size).toBe(0);
+  });
+
+  it("evicts the least recently remembered entry beyond the size bound", () => {
+    const cache = new LinkCache(2, 60_000);
+    cache.remember(link("one1111"), 0);
+    cache.remember(link("two2222"), 1);
+    cache.remember(link("one1111"), 2); // refreshed: "two2222" is now the oldest
+    cache.remember(link("thr3333"), 3);
+    expect(cache.size).toBe(2);
+    expect(cache.recall("two2222", 4)).toBeNull();
+    expect(cache.recall("one1111", 4)).not.toBeNull();
+    expect(cache.recall("thr3333", 4)).not.toBeNull();
   });
 });

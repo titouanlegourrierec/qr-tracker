@@ -11,6 +11,8 @@ import {
   isValidTimezone,
   linkSchema,
   MAX_LABEL_LENGTH,
+  QUERY_DATE_MAX,
+  QUERY_DATE_MIN,
   SECRET_KEY_LENGTH,
   secretKeySchema,
   SLUG_LENGTH,
@@ -99,6 +101,15 @@ describe("statsQuerySchema", () => {
       false,
     );
     expect(statsQuerySchema.safeParse({ from: "31/01/2026" }).success).toBe(false);
+  });
+
+  it("bounds dates to QUERY_DATE_MIN…QUERY_DATE_MAX", () => {
+    expect(statsQuerySchema.safeParse({ from: QUERY_DATE_MIN, to: QUERY_DATE_MAX }).success).toBe(
+      true,
+    );
+    expect(statsQuerySchema.safeParse({ to: "9999-12-31" }).success).toBe(false);
+    expect(statsQuerySchema.safeParse({ from: "1999-12-31" }).success).toBe(false);
+    expect(exportQuerySchema.safeParse({ to: "9999-12-31" }).success).toBe(false);
   });
 
   it("validates the timezone", () => {

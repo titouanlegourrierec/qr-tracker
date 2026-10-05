@@ -68,6 +68,13 @@ export function StatsPage() {
   const params = useParams();
   const slug = params.slug ?? "";
   const secretKey = params.key ?? "";
+  // Opening another link's private URL only changes the hash, so React would reuse this
+  // instance: remount instead, so no state (filters, loaded data, form fields such as the
+  // destination being edited) can leak from one link to the next.
+  return <StatsDashboard key={`${slug}/${secretKey}`} slug={slug} secretKey={secretKey} />;
+}
+
+function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }) {
   const tz = browserTimezone();
 
   const validParams =
@@ -160,6 +167,7 @@ export function StatsPage() {
 
   const stats = data?.stats ?? null;
   const link = data?.link ?? null;
+  const today = todayIn(tz);
   const shortUrl = link === null ? null : `${API_URL}/r/${link.slug}`;
   const hasGeo =
     stats?.topCountries.some((entry) => entry.value !== null && isOnWorldMap(entry.value)) ?? false;
@@ -196,6 +204,7 @@ export function StatsPage() {
                 <span>{en.stats.range.from}</span>
                 <input
                   type="date"
+                  max={today}
                   value={fromInput}
                   onChange={(e) => {
                     setFromInput(e.target.value);
@@ -206,6 +215,7 @@ export function StatsPage() {
                 <span>{en.stats.range.to}</span>
                 <input
                   type="date"
+                  max={today}
                   value={toInput}
                   onChange={(e) => {
                     setToInput(e.target.value);

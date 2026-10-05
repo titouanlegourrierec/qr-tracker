@@ -2,7 +2,7 @@ import type { Link } from "@qr-tracker/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, NavLink, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { loadCodes, saveCode } from "../src/lib/storage.js";
@@ -152,6 +152,64 @@ describe("StatsPage", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent("Destination updated.");
+  });
+
+  it("shows the destination as normalized by the worker after saving", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    server.use(
+      http.patch(`${API}/api/links/${SLUG}`, () =>
+        HttpResponse.json(makeLink({ targetUrl: "https://updated.example.org/" })),
+      ),
+    );
+    renderPage();
+    await screen.findByText("42");
+
+    const input = screen.getByLabelText("Destination address");
+    await user.clear(input);
+    await user.type(input, "https://updated.example.org");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await screen.findByRole("status");
+    expect(input).toHaveValue("https://updated.example.org/");
+  });
+
+  it("starts from a clean slate when another link's private URL is opened", async () => {
+    const otherSlug = "Zz9yX8w";
+    const otherKey = "o".repeat(43);
+    mockApi();
+    server.use(
+      http.get(`${API}/api/links/${otherSlug}`, () =>
+        HttpResponse.json(
+          makeLink({ slug: otherSlug, label: "Flyer C", targetUrl: "https://other.example/c" }),
+        ),
+      ),
+      http.get(`${API}/api/links/${otherSlug}/stats`, () => HttpResponse.json(makeStats())),
+    );
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={[`/stats/${SLUG}/${KEY}`]}>
+        {/* Stands in for a bookmark: only the URL fragment changes. */}
+        <NavLink to={`/stats/${otherSlug}/${otherKey}`}>open other</NavLink>
+        <Routes>
+          <Route path="/stats/:slug/:key" element={<StatsPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("heading", { name: /Poster B/ });
+    await user.click(screen.getByRole("button", { name: "7 days" }));
+    await user.type(screen.getByLabelText("Destination address"), "-typed-for-B");
+
+    await user.click(screen.getByRole("link", { name: "open other" }));
+
+    expect(await screen.findByRole("heading", { name: /Flyer C/ })).toBeInTheDocument();
+    // The edit field shows this link's destination, not the previous link's draft…
+    expect(screen.getByLabelText("Destination address")).toHaveValue("https://other.example/c");
+    // …and the filters are back to their defaults.
+    expect(screen.getByRole("button", { name: "All time" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("toggles the disabled status and shows the badge", async () => {

@@ -30,6 +30,13 @@ export const EXPORT_MAX_ROWS = 50_000;
 /** byDay series is clamped to at most this many days. */
 export const STATS_MAX_RANGE_DAYS = 366;
 
+/**
+ * Accepted bounds for `from`/`to` query dates (inclusive). Keeps day arithmetic far
+ * from year 10000, where ISO strings change shape ("+010000-01-01").
+ */
+export const QUERY_DATE_MIN = "2000-01-01";
+export const QUERY_DATE_MAX = "2099-12-31";
+
 /** Fixed-window rate limits, enforced by the D1-backed limiter. */
 export const RATE_LIMITS = {
   /** Link creation, keyed by hashed IP. */

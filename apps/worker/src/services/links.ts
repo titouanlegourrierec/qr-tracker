@@ -18,11 +18,17 @@ import type { LinkRow } from "../repositories/links.js";
 
 const MAX_SLUG_ATTEMPTS = 3;
 
-function assertValidTargetUrl(targetUrl: string, workerHostname: string): void {
+/**
+ * Validates a destination and returns its normalized absolute form. Always store this
+ * form: a raw spelling like "https:/host/path" passes validation, but browsers resolve it
+ * against the redirect's own URL when it is sent verbatim in Location.
+ */
+function normalizeTargetUrl(targetUrl: string, workerHostname: string): string {
   const result = validateTargetUrl(targetUrl, { blockedHosts: [workerHostname] });
   if (!result.ok) {
     throw new ApiError("TARGET_URL_INVALID", `Target URL rejected (${result.reason})`);
   }
+  return result.url.href;
 }
 
 export async function createLink(
@@ -33,8 +39,8 @@ export async function createLink(
   const verified = await verifyTurnstile(env.TURNSTILE_SECRET_KEY, input.turnstileToken);
   if (!verified) throw new ApiError("TURNSTILE_FAILED", "Turnstile verification failed");
 
-  assertValidTargetUrl(input.targetUrl, requestUrl.hostname);
-  if ((await checkUrlReputation(input.targetUrl, env)) === "malicious") {
+  const targetUrl = normalizeTargetUrl(input.targetUrl, requestUrl.hostname);
+  if ((await checkUrlReputation(targetUrl, env)) === "malicious") {
     throw new ApiError("TARGET_URL_INVALID", "Target URL rejected (reputation)");
   }
 
@@ -47,7 +53,7 @@ export async function createLink(
     try {
       const row = await insertLink(
         env.DB,
-        { slug, targetUrl: input.targetUrl, label: input.label ?? null, secretHash },
+        { slug, targetUrl, label: input.label ?? null, secretHash },
         nowIso,
       );
       log("link_created", { slug: row.slug });
@@ -89,13 +95,14 @@ export async function updateLink(
   if (row.status === "blocked") {
     throw new ApiError("FORBIDDEN", "This link was blocked by the operator");
   }
-  if (patch.targetUrl !== undefined) assertValidTargetUrl(patch.targetUrl, workerHostname);
+  const targetUrl =
+    patch.targetUrl === undefined ? undefined : normalizeTargetUrl(patch.targetUrl, workerHostname);
   const nowIso = new Date().toISOString();
   await updateLinkRow(
     db,
     row.id,
     {
-      ...(patch.targetUrl !== undefined ? { targetUrl: patch.targetUrl } : {}),
+      ...(targetUrl !== undefined ? { targetUrl } : {}),
       ...(patch.status !== undefined ? { status: patch.status } : {}),
     },
     nowIso,

@@ -85,5 +85,7 @@ export function validateTargetUrl(raw: string, options: TargetUrlOptions = {}): 
   const hostname = url.hostname.toLowerCase().replace(/\.$/, "");
   const blocked = options.blockedHosts?.some((h) => h.toLowerCase() === hostname) ?? false;
   if (blocked) return { ok: false, reason: "blocked-host" };
+  // Callers store url.href, which percent-encoding can make longer than the input.
+  if (url.href.length > MAX_TARGET_URL_LENGTH) return { ok: false, reason: "too-long" };
   return { ok: true, url };
 }
