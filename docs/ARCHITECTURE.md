@@ -31,12 +31,18 @@ flowchart LR
 **Creation** — `POST /api/links`: Turnstile token verified server-side (fail-closed) →
 target URL validated (http/https only, no credentials, no private hosts, not the worker
 itself) → base62 slug + 256-bit key generated; only the key's SHA-256 is stored; the key
-is returned exactly once.
+is returned exactly once. The destination is stored in its normalized form (`URL.href`):
+a raw spelling such as `https:/host/path` passes validation, but a browser would resolve
+it against the worker's own URL if it were sent verbatim in `Location`.
 
 **Scan** — `GET /r/:slug`: 302 + `Cache-Control: no-store` responds immediately; the scan
 is recorded inside `ctx.waitUntil()` (a tracking failure never breaks the redirect). Raw
 IP and user-agent exist only in that function scope: they are reduced to a daily-salted
-SHA-256 visitor hash and coarse device/OS/browser families before insert.
+SHA-256 visitor hash and coarse device/OS/browser families before insert. Workers
+invocation logs are disabled in `wrangler.jsonc` for the same reason (they would record
+every request's headers). The 404/410/503 pages are `no-store` too (Chromium otherwise
+caches a 410 indefinitely). If D1 fails, the redirect falls back to the last state the
+isolate saw for that slug (bounded in-memory cache, `services/redirect.ts`).
 
 **Stats** — `GET /api/links/:slug/stats`: one atomic D1 batch of aggregate queries
 (grouped by UTC hour/day over `idx_scans_link_time`), then the buckets are mapped to the

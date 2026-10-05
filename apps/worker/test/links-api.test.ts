@@ -201,8 +201,31 @@ describe("GET/PATCH/DELETE /api/links/:slug", () => {
     );
     expect(res.status).toBe(200);
     const link = await res.json<Link>();
-    expect(link.targetUrl).toBe("https://updated.example.org");
+    // Destinations are stored normalized (URL.href).
+    expect(link.targetUrl).toBe("https://updated.example.org/");
     expect(link.status).toBe("disabled");
+  });
+
+  it("stores destinations normalized so the redirect never resolves them relatively", async () => {
+    // Accepted by the validator (host a.b), but sent verbatim in Location a browser
+    // would resolve it against the worker itself: a self-redirect loop.
+    const created = await createTestLink("https:/example.com/page");
+    const row = await env.DB.prepare("SELECT target_url FROM links WHERE slug = ?1")
+      .bind(created.slug)
+      .first<{ target_url: string }>();
+    expect(row?.target_url).toBe("https://example.com/page");
+
+    const res = await app.request(
+      `${BASE}/api/links/${created.slug}`,
+      {
+        method: "PATCH",
+        headers: authHeaders(created.secretKey),
+        body: JSON.stringify({ targetUrl: `https:/a.b/../r/${created.slug}` }),
+      },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json<Link>()).targetUrl).toBe(`https://a.b/r/${created.slug}`);
   });
 
   it("rejects a PATCH to a private-host URL", async () => {

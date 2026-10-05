@@ -46,6 +46,10 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 - Node ≥ 25 does not bundle Corepack. Local setup: Node 24 (`.nvmrc`) or `npm i -g pnpm`.
 - Node ≥ 25 also ships an experimental global `localStorage` that shadows jsdom's in web
   tests — `apps/web/test/setup.ts` restores the real one; use `window.localStorage` in code.
+- Destinations are stored as `validateTargetUrl(...).url.href`, never the raw input
+  (`https:/host` passes validation but resolves against the worker in `Location`).
+- Workers invocation logs are off on purpose (`wrangler.jsonc`): they would log IPs and
+  user-agents. Never pass personal data to `log()`/`logError()` either.
 - Link status is three-valued: `active` / `disabled` (owner) / `blocked` (admin only —
   the owner API cannot set or clear it; redirect serves 410 for both non-active states).
 - react-hooks v7 lint (React Compiler rules): no synchronous setState inside effects, no

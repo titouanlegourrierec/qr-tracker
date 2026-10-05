@@ -21,6 +21,23 @@ All notable changes to this project are documented here. The format follows
 ### Fixed
 
 - Map tooltips showed "undefined" instead of the country name.
+- Destinations are now stored normalized: a URL typed with a single slash
+  (`https:/example.com`) passed validation but sent scanners to a 404 on the worker, and
+  could be used to make a link redirect to itself.
+- A stats or export request with `to=9999-12-31` looped until the worker was killed; query
+  dates are now limited to 2000-01-01…2099-12-31 and the date pickers stop at today.
+- The "link disabled" page (410) could stay cached in Chrome after the link was re-enabled;
+  the 404/410 pages are now `no-store`.
+- Opening another link's private URL from a dashboard kept the previous link's form state:
+  saving could write link A's destination into link B.
+
+### Security
+
+- Workers invocation logs are disabled: they recorded every request, including IP
+  addresses and full user-agents, for 3 days.
+- If D1 is unavailable (outage or exhausted daily quota), redirects fall back to the last
+  known state of recently scanned links instead of failing, and unknown links get a 503
+  page. See docs/DEPLOYMENT.md §10 for flood protection beyond the free plan.
 
 ## [1.0.0] - 2026-09-28
 

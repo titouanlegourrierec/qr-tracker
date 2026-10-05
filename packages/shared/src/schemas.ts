@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-import { DEFAULT_TIMEZONE, MAX_LABEL_LENGTH, MAX_TARGET_URL_LENGTH } from "./constants.js";
+import {
+  DEFAULT_TIMEZONE,
+  MAX_LABEL_LENGTH,
+  MAX_TARGET_URL_LENGTH,
+  QUERY_DATE_MAX,
+  QUERY_DATE_MIN,
+} from "./constants.js";
 
 /** True when the string names a timezone the runtime's ICU data knows about. */
 export function isValidTimezone(tz: string): boolean {
@@ -70,10 +76,16 @@ export const adminStatusRequestSchema = z.object({
 });
 export type AdminStatusRequest = z.infer<typeof adminStatusRequestSchema>;
 
+const queryDateSchema = z.iso
+  .date()
+  .refine((date) => date >= QUERY_DATE_MIN && date <= QUERY_DATE_MAX, {
+    message: `Date must be between ${QUERY_DATE_MIN} and ${QUERY_DATE_MAX}`,
+  });
+
 export const statsQuerySchema = z
   .object({
-    from: z.iso.date().optional(),
-    to: z.iso.date().optional(),
+    from: queryDateSchema.optional(),
+    to: queryDateSchema.optional(),
     tz: z
       .string()
       .refine(isValidTimezone, { message: "Unknown timezone" })
@@ -87,8 +99,8 @@ export type StatsQuery = z.infer<typeof statsQuerySchema>;
 
 export const exportQuerySchema = z
   .object({
-    from: z.iso.date().optional(),
-    to: z.iso.date().optional(),
+    from: queryDateSchema.optional(),
+    to: queryDateSchema.optional(),
     includeBots: z.stringbool().default(false),
   })
   .refine((q) => q.from === undefined || q.to === undefined || q.from <= q.to, {

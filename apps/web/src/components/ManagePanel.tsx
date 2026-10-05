@@ -48,7 +48,10 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
       return;
     }
     run(async () => {
-      onUpdated(await api.updateLink(link.slug, secretKey, { targetUrl: clean }));
+      const updated = await api.updateLink(link.slug, secretKey, { targetUrl: clean });
+      // Show the destination as stored (the worker normalizes it, e.g. "https:/x" → "https://x/").
+      setTargetUrl(updated.targetUrl);
+      onUpdated(updated);
       setMessage(en.stats.manage.saved);
     });
   }

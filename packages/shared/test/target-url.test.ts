@@ -43,6 +43,28 @@ describe("validateTargetUrl", () => {
     expect(reasonOf(long)).toBe("too-long");
   });
 
+  it("rejects URLs whose normalized form exceeds the maximum", () => {
+    // Each "é" is 1 character as typed but 6 once percent-encoded ("%C3%A9").
+    const raw = `https://example.com/${"é".repeat(400)}`;
+    expect(raw.length).toBeLessThanOrEqual(MAX_TARGET_URL_LENGTH);
+    expect(reasonOf(raw)).toBe("too-long");
+  });
+
+  it("normalizes sloppy spellings to an absolute URL", () => {
+    // Browsers resolve these against the redirect's own URL when sent verbatim in
+    // Location, so callers must store url.href instead of the raw input.
+    for (const [raw, href] of [
+      ["https:/example.com/page", "https://example.com/page"],
+      ["https:example.com", "https://example.com/"],
+      ["https:/a.b/../r/AAAAAAA", "https://a.b/r/AAAAAAA"],
+      ["https://example.com/a\nb", "https://example.com/ab"],
+    ] as const) {
+      const result = validateTargetUrl(raw);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.url.href).toBe(href);
+    }
+  });
+
   it("rejects localhost and reserved TLDs", () => {
     expect(reasonOf("http://localhost")).toBe("private-host");
     expect(reasonOf("http://localhost:3000")).toBe("private-host");

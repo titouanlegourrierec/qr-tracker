@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 
-import { statsResponseSchema } from "@qr-tracker/shared";
+import { QUERY_DATE_MAX, STATS_MAX_RANGE_DAYS, statsResponseSchema } from "@qr-tracker/shared";
 import type { StatsResponse } from "@qr-tracker/shared";
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -149,6 +149,13 @@ describe("GET /api/links/:slug/stats", () => {
     expect(statsResponseSchema.parse(body)).toBeTruthy();
   });
 
+  it("clamps the widest accepted range to STATS_MAX_RANGE_DAYS days", async () => {
+    const { status, body } = await fetchStats(`?to=${QUERY_DATE_MAX}&tz=UTC`);
+    expect(status).toBe(200);
+    expect(body.byDay).toHaveLength(STATS_MAX_RANGE_DAYS);
+    expect(body.byDay.at(-1)?.date).toBe(QUERY_DATE_MAX);
+  });
+
   it("rejects bad queries and wrong keys", async () => {
     const bad = await app.request(
       `${BASE}/api/links/statlnk/stats?tz=Mars/Olympus`,
@@ -156,6 +163,14 @@ describe("GET /api/links/:slug/stats", () => {
       env,
     );
     expect(bad.status).toBe(400);
+
+    // Used to loop forever: the day after 9999-12-31 is "+010000-01", which sorts first.
+    const farFuture = await app.request(
+      `${BASE}/api/links/statlnk/stats?to=9999-12-31`,
+      { headers: { Authorization: `Bearer ${KEY}` } },
+      env,
+    );
+    expect(farFuture.status).toBe(400);
 
     const unauth = await app.request(
       `${BASE}/api/links/statlnk/stats`,

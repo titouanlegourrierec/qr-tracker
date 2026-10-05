@@ -67,8 +67,12 @@ export async function computeStats(
     byDayUniques.set(localDate, (byDayUniques.get(localDate) ?? 0) + row.unique_visitors);
   }
 
+  // Count-based on purpose: comparing date strings never terminates once addDays
+  // crosses into year 10000 ("+010000-01" sorts before "9999-12-31").
   const byDay: DayPoint[] = [];
-  for (let date = from; date <= to; date = addDays(date, 1)) {
+  const dayCount = inclusiveDayCount(from, to);
+  for (let i = 0; i < dayCount; i++) {
+    const date = addDays(from, i);
     byDay.push({
       date,
       scans: byDayScans.get(date) ?? 0,

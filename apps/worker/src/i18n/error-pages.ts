@@ -37,3 +37,9 @@ export const DISABLED_PAGE = page(
   "This link is disabled",
   "The owner of this QR code has temporarily disabled the redirect. Please try again later.",
 );
+
+export const UNAVAILABLE_PAGE = page(
+  "Temporarily unavailable",
+  "This link is temporarily unavailable",
+  "This QR code could not be resolved right now. Please try again in a few minutes.",
+);

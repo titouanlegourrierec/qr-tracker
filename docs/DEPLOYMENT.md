@@ -126,6 +126,37 @@ point in that history that you can return to.
 - **Migrations are forward-only**: keep them additive (new tables, columns, indexes) so
   that an older worker keeps working against a newer schema.
 
+## 10. Protecting the redirect from floods
+
+On the free plan every quota is a hard daily cutoff (reset at 00:00 UTC): 100,000 Worker
+requests, 100,000 D1 rows written (a scan writes about 2) and 5,000,000 D1 rows read. A
+single script hammering `/r/<slug>` can exhaust them, and nothing inside the worker can
+stop that: a request the worker rejects has already been counted.
+
+What the worker does on its own:
+
+- If D1 fails (outage or exhausted quota), the redirect falls back to the last state this
+  isolate saw for the slug (`src/services/redirect.ts`), so recently scanned QR codes keep
+  working; scans are simply not recorded meanwhile. Unknown slugs get a 503 page with
+  `Retry-After` instead of a raw error.
+
+What only you can decide (both need a purchase):
+
+- **Custom domain + WAF rate limiting rule** (the free plan includes 1 rule, but rules only
+  apply to a zone, not to `workers.dev`). Requests blocked by the WAF never reach the
+  worker, so they consume no quota. Security → WAF → Rate limiting rules → create:
+  - when: field _URI Path_ starts with `/r/` (the free plan only allows the path field);
+  - characteristics: IP; period and mitigation timeout: 10 seconds (the only free values);
+    action: Block;
+  - threshold: start around 20 requests per 10 seconds. Keep headroom: a crowd behind one
+    carrier-grade NAT (event, campus) shares a single IP.
+- **Workers Paid** ($5/month): 10 million requests and 50 million D1 rows written per
+  month included, billed beyond instead of cut off. This is the only protection against a
+  distributed flood.
+
+Print QR codes at scale only once the domain they will encode is final: every printed code
+contains the worker's hostname forever.
+
 ## Troubleshooting
 
 | Symptom                                    | Fix                                                                                                 |
