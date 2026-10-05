@@ -45,6 +45,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete (window as { turnstile?: unknown }).turnstile;
+  vi.restoreAllMocks();
 });
 
 describe("CreatePage", () => {
@@ -83,6 +84,62 @@ describe("CreatePage", () => {
     const codes = loadCodes();
     expect(codes).toHaveLength(1);
     expect(codes[0]).toMatchObject({ slug: SLUG, secretKey: KEY, label: "Poster" });
+  });
+
+  async function createOne(user: ReturnType<typeof userEvent.setup>) {
+    server.use(
+      http.post(`${API}/api/links`, () =>
+        HttpResponse.json(
+          { slug: SLUG, shortUrl: `${API}/r/${SLUG}`, secretKey: KEY },
+          { status: 201 },
+        ),
+      ),
+    );
+    renderPage();
+    const submit = screen.getByRole("button", { name: "Create QR code" });
+    await waitFor(() => {
+      expect(submit).toBeEnabled();
+    });
+    await user.type(screen.getByLabelText(/Destination address/), "https://example.org/page");
+    await user.click(submit);
+    return await screen.findByRole("status");
+  }
+
+  function leavePage(): boolean {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  }
+
+  it("moves focus to the result and names each copy button", async () => {
+    const user = userEvent.setup();
+    const status = await createOne(user);
+    expect(status).toHaveFocus();
+    for (const name of ["Copy link", "Copy key", "Copy private link"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
+
+  it("asks before leaving until the key is confirmed as saved", async () => {
+    const user = userEvent.setup();
+    await createOne(user);
+    expect(leavePage()).toBe(true);
+
+    await user.click(screen.getByRole("checkbox", { name: /saved my secret key/ }));
+    expect(leavePage()).toBe(false);
+
+    await user.click(screen.getByRole("checkbox", { name: /saved my secret key/ }));
+    expect(leavePage()).toBe(true);
+  });
+
+  it("says so when the browser could not keep the code in My QR codes", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError");
+    });
+    await createOne(user);
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not keep a copy/);
+    expect(screen.queryByText(/was added to “My QR codes”/)).not.toBeInTheDocument();
   });
 
   it("pre-validates the URL client-side", async () => {

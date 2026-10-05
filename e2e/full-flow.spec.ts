@@ -20,6 +20,8 @@ async function createQr(page: Page, targetUrl: string, label: string) {
     .first()
     .innerText();
   const statsUrl = await page.locator("code", { hasText: "#/stats/" }).first().innerText();
+  // Acknowledging the one-time key also disarms the "leave this page?" warning.
+  await page.getByRole("checkbox", { name: /saved my secret key/ }).check();
   return { shortUrl, statsUrl };
 }
 
@@ -123,4 +125,19 @@ test("manual stats entry rejects a wrong key with a friendly error", async ({ pa
   await page.getByLabel(/Secret key/).fill("A".repeat(43));
   await page.getByRole("button", { name: "Show statistics" }).click();
   await expect(page.getByRole("alert")).toHaveText("Invalid secret key.", { timeout: 15_000 });
+});
+
+test("anyone can report a QR code from its short link", async ({ page }) => {
+  const { shortUrl } = await createQr(page, "https://example.com/suspicious", "Reported");
+
+  await page.getByRole("link", { name: "Report abuse" }).click();
+  await page.getByLabel("Short link or code").fill(shortUrl);
+  await page.getByRole("radio", { name: /Phishing or scam/ }).check();
+  await page.getByLabel(/Details/).fill("Asks for a bank password");
+  const send = page.getByRole("button", { name: "Send report" });
+  await expect(send).toBeEnabled({ timeout: 30_000 });
+  await send.click();
+  await expect(page.getByRole("status")).toContainText("your report was sent", {
+    timeout: 15_000,
+  });
 });

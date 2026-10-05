@@ -3,6 +3,7 @@ import { DEFAULT_RETENTION_DAYS } from "@qr-tracker/shared";
 import { log } from "../lib/log.js";
 import { addDays } from "../lib/timezone.js";
 import { deleteRateLimitWindowsBefore } from "../repositories/rate-limits.js";
+import { deleteReportsBefore } from "../repositories/reports.js";
 import { getOrCreateDailySalt, deleteSaltsBefore } from "../repositories/salts.js";
 import { deleteScansBefore } from "../repositories/scans.js";
 
@@ -15,12 +16,14 @@ export function parseRetentionDays(raw: string | undefined): number {
 export interface MaintenanceReport {
   saltsDeleted: number;
   scansPurged: number;
+  reportsPurged: number;
   rateWindowsDeleted: number;
 }
 
 /**
  * Daily maintenance (cron): rotate the salt (create today's, drop all before
- * yesterday), purge scans past retention, drop expired rate-limit windows.
+ * yesterday), purge scans and abuse reports past retention, drop expired rate-limit
+ * windows.
  */
 export async function runDailyMaintenance(env: Env, now = new Date()): Promise<MaintenanceReport> {
   const today = now.toISOString().slice(0, 10);
@@ -31,13 +34,14 @@ export async function runDailyMaintenance(env: Env, now = new Date()): Promise<M
   const retentionDays = parseRetentionDays(env.RETENTION_DAYS);
   const cutoffIso = new Date(now.getTime() - retentionDays * 86_400_000).toISOString();
   const scansPurged = await deleteScansBefore(env.DB, cutoffIso);
+  const reportsPurged = await deleteReportsBefore(env.DB, cutoffIso);
 
   const rateWindowsDeleted = await deleteRateLimitWindowsBefore(
     env.DB,
     Math.floor(now.getTime() / 1000) - 86_400,
   );
 
-  const report = { saltsDeleted, scansPurged, rateWindowsDeleted };
+  const report = { saltsDeleted, scansPurged, reportsPurged, rateWindowsDeleted };
   log("cron_completed", { ...report, retentionDays });
   return report;
 }

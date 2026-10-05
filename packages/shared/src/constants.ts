@@ -43,7 +43,12 @@ export const RATE_LIMITS = {
   createLink: { limit: 10, windowSeconds: 3600 },
   /** Stats + management endpoints, keyed by hashed IP + slug. */
   authenticated: { limit: 60, windowSeconds: 60 },
+  /** Abuse reports, keyed by hashed IP. */
+  report: { limit: 5, windowSeconds: 3600 },
 } as const;
+
+/** Free-text details a reporter may add to an abuse report. */
+export const MAX_REPORT_DETAILS_LENGTH = 1000;
 
 export type RateLimitScope = keyof typeof RATE_LIMITS;
 

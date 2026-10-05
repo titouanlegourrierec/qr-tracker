@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 import { en } from "../i18n/en.js";
 
 /**
@@ -53,6 +55,15 @@ export function PrivacyPage() {
         salts are deleted after one day.
       </p>
 
+      <h2>Reporting a QR code</h2>
+      <p>
+        The <Link to="/report">report form</Link> stores only the QR code&apos;s link code, the
+        reason you pick, what you choose to write in the details field and the date. It does not
+        store who you are: like link creation, it is protected by Cloudflare Turnstile and rate
+        limited with a daily-salted hash instead of your IP address. Reports are deleted once
+        reviewed, and after 12 months at the latest.
+      </p>
+
       <h2>Deleting data</h2>
       <p>
         Whoever holds a QR code&apos;s secret key can permanently delete the link{" "}
@@ -65,7 +76,9 @@ export function PrivacyPage() {
       <p>
         This site uses no cookies. The &ldquo;My QR codes&rdquo; list is stored only in your browser
         (localStorage) and never leaves your device. Creating a QR code is protected by Cloudflare
-        Turnstile, which performs an anti-bot check without cookies or ad tracking.
+        Turnstile, which performs an anti-bot check without cookies or ad tracking. When you create
+        a QR code or change its destination, that destination address — and nothing else — may be
+        checked against Google Safe Browsing so that known phishing and malware pages are refused.
       </p>
     </>
   );

@@ -1,5 +1,5 @@
 import { SECRET_KEY_LENGTH, SLUG_LENGTH } from "@qr-tracker/shared";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   generateSalt,
@@ -11,6 +11,11 @@ import {
 import { LinkCache } from "../src/lib/link-cache.js";
 import { isOverLimit, rateLimitKey, windowStart } from "../src/lib/rate-limit.js";
 import { verifyTurnstile } from "../src/lib/turnstile.js";
+import { checkUrlReputation } from "../src/lib/url-reputation.js";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("crypto", () => {
   it("generates base62 slugs of the right length", () => {
@@ -106,14 +111,59 @@ describe("verifyTurnstile", () => {
 });
 
 describe("checkUrlReputation", () => {
-  it("returns ok when the flag is off and unknown when on without a provider", async () => {
-    const { checkUrlReputation } = await import("../src/lib/url-reputation.js");
+  const enabled = { URL_REPUTATION_ENABLED: "true", SAFE_BROWSING_API_KEY: "test-key" };
+  const answering =
+    (response: Response): typeof fetch =>
+    () =>
+      Promise.resolve(response);
+
+  it("skips the lookup when disabled or without an API key", async () => {
+    const lookup = vi.fn<typeof fetch>();
     expect(
-      await checkUrlReputation("https://example.com", { URL_REPUTATION_ENABLED: "false" }),
+      await checkUrlReputation("https://example.com", { URL_REPUTATION_ENABLED: "false" }, lookup),
     ).toBe("ok");
     expect(
-      await checkUrlReputation("https://example.com", { URL_REPUTATION_ENABLED: "true" }),
+      await checkUrlReputation("https://example.com", { URL_REPUTATION_ENABLED: "true" }, lookup),
     ).toBe("unknown");
+    expect(lookup).not.toHaveBeenCalled();
+  });
+
+  it("sends only the destination URL to the Safe Browsing Lookup API", async () => {
+    const lookup = vi.fn<typeof fetch>(() => Promise.resolve(Response.json({})));
+    expect(await checkUrlReputation("https://example.com/page", enabled, lookup)).toBe("ok");
+
+    const [url, init] = lookup.mock.calls[0] ?? [];
+    expect(url).toBe("https://safebrowsing.googleapis.com/v4/threatMatches:find?key=test-key");
+    const rawBody = init?.body;
+    if (typeof rawBody !== "string") throw new Error("expected a JSON string body");
+    const body = JSON.parse(rawBody) as {
+      threatInfo: { threatEntries: { url: string }[]; threatTypes: string[] };
+    };
+    expect(body.threatInfo.threatEntries).toEqual([{ url: "https://example.com/page" }]);
+    expect(body.threatInfo.threatTypes).toContain("SOCIAL_ENGINEERING");
+  });
+
+  it("flags a destination with a match as malicious", async () => {
+    const match = Response.json({
+      matches: [{ threatType: "SOCIAL_ENGINEERING", platformType: "ANY_PLATFORM" }],
+    });
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    expect(await checkUrlReputation("https://phish.example", enabled, answering(match))).toBe(
+      "malicious",
+    );
+  });
+
+  it("fails open (unknown) on API errors, odd bodies and network failures", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const failures: (typeof fetch)[] = [
+      answering(new Response("quota", { status: 429 })),
+      answering(Response.json({ matches: "nope" })),
+      () => Promise.reject(new Error("network down")),
+    ];
+    for (const lookup of failures) {
+      expect(await checkUrlReputation("https://example.com", enabled, lookup)).toBe("unknown");
+    }
+    expect(errorSpy).toHaveBeenCalledTimes(3);
   });
 });
 

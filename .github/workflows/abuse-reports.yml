@@ -1,0 +1,32 @@
+name: Abuse reports
+
+# Daily check of the abuse-report queue. The worker cannot send e-mail on the free plan,
+# so this job fails when reports are waiting and GitHub e-mails you about the failed run.
+# Review them locally with `node scripts/admin.mjs reports` (docs/DEPLOYMENT.md §11).
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: ".nvmrc"
+      - name: Fail when reports are waiting
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          WORKER_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          if [ -z "$ADMIN_TOKEN" ] || [ -z "$WORKER_URL" ]; then
+            echo "::notice::Add the ADMIN_TOKEN secret (and the VITE_API_URL variable) to enable this check."
+            exit 0
+          fi
+          node scripts/admin.mjs reports --fail-if-any

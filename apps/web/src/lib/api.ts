@@ -1,5 +1,6 @@
 import {
   createLinkResponseSchema,
+  createReportResponseSchema,
   errorResponseSchema,
   linkSchema,
   statsResponseSchema,
@@ -7,6 +8,8 @@ import {
 import type {
   CreateLinkRequest,
   CreateLinkResponse,
+  CreateReportRequest,
+  CreateReportResponse,
   ErrorCode,
   Link,
   StatsResponse,
@@ -85,6 +88,14 @@ async function requestJson<T>(path: string, schema: z.ZodType<T>, init?: Request
 export const api = {
   createLink(input: CreateLinkRequest): Promise<CreateLinkResponse> {
     return requestJson("/api/links", createLinkResponseSchema, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+  },
+
+  reportLink(input: CreateReportRequest): Promise<CreateReportResponse> {
+    return requestJson("/api/reports", createReportResponseSchema, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),

@@ -6,6 +6,24 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Report abuse** page: anyone can report a QR code from its short link, with no account
+  and without being identified. The worker's `/` and `/report` lead there. Operators triage
+  with `node scripts/admin.mjs reports | disable | dismiss`, and a daily workflow e-mails
+  them (through a failed run) while reports are waiting.
+- Destinations are checked against Google Safe Browsing on creation and on every change of
+  destination, once a `SAFE_BROWSING_API_KEY` secret is set (docs/DEPLOYMENT.md §11).
+- "I have saved my secret key somewhere safe" confirmation: until it is ticked, closing or
+  reloading the page asks for confirmation.
+
+### Changed
+
+- The creation page now says so when the browser could not keep the QR code in
+  "My QR codes" (private browsing, full storage), instead of claiming it was saved.
+- Copy buttons are named after what they copy, and keyboard focus moves to the result after
+  creating a QR code.
+
 ## [1.1.0] - 2026-10-05
 
 ### Added

@@ -21,7 +21,7 @@ import { authorizeLink, createLink, deleteLink, getLink, updateLink } from "../s
 import { computeStats } from "../services/stats.js";
 
 /** Parses the request body against a schema, mapping failures to VALIDATION_ERROR. */
-async function parseBody<T>(c: Context<AppBindings>, schema: z.ZodType<T>): Promise<T> {
+export async function parseBody<T>(c: Context<AppBindings>, schema: z.ZodType<T>): Promise<T> {
   let raw: unknown;
   try {
     raw = await c.req.json();
@@ -34,7 +34,7 @@ async function parseBody<T>(c: Context<AppBindings>, schema: z.ZodType<T>): Prom
 }
 
 /** Parses URL query params against a schema, mapping failures to VALIDATION_ERROR. */
-function parseQuery<T>(c: Context<AppBindings>, schema: z.ZodType<T>): T {
+export function parseQuery<T>(c: Context<AppBindings>, schema: z.ZodType<T>): T {
   const params = Object.fromEntries(new URL(c.req.url).searchParams);
   const parsed = schema.safeParse(params);
   if (!parsed.success) throw new ApiError("VALIDATION_ERROR", z.prettifyError(parsed.error));
@@ -119,7 +119,7 @@ export function linksRoutes(): Hono<AppBindings> {
     async (c) => {
       const body = await parseBody(c, updateLinkRequestSchema);
       const link = await updateLink(
-        c.env.DB,
+        c.env,
         getSlugParam(c),
         getBearerToken(c),
         body,

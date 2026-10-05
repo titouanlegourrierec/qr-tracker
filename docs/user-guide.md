@@ -18,12 +18,15 @@ You get:
   (vector, for designers);
 - the **short link** behind the QR code;
 - your **secret key** — ⚠️ it is shown only once. Copy it somewhere safe (password
-  manager, notes…). Without it, you cannot view the statistics or modify the link;
+  manager, notes…), then tick **I have saved my secret key somewhere safe**: until you do,
+  your browser asks for confirmation before you close or reload the page. Without the key,
+  you cannot view the statistics or modify the link;
 - a **private statistics link** to bookmark: it contains the key after the `#`, which is
   never sent to the server.
 
 The QR code is also added to **My QR codes** — but only in the browser where you created
-it. Use **Export (JSON)** to make a backup or move it to another computer.
+it (the page tells you if your browser refused, e.g. in private browsing). Use
+**Export (JSON)** to make a backup or move it to another computer.
 
 ## View the statistics
 
@@ -50,6 +53,17 @@ At the bottom of the statistics page you can:
   it;
 - **permanently delete** the link and all of its statistics (irreversible — the printed
   QR code will stop working).
+
+## Report a QR code
+
+If a QR code made with this service leads to a scam, malware or other harmful content,
+open **Report abuse** (at the bottom of every page), paste the short link your phone showed
+(…/r/ followed by 7 characters) and pick what is wrong. Reports are reviewed, and harmful
+links are blocked for everyone. Reporting needs no account and does not record who you
+are.
+
+Destinations known to Google Safe Browsing as phishing or malware are refused when a QR
+code is created or edited.
 
 ## Printing tips
 

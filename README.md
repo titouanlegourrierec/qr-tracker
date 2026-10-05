@@ -17,6 +17,8 @@ its own secret key. Built for a research lab, open to anyone.
 - A private dashboard per QR code (secret key in the URL _fragment_ only): totals, time
   series, hour/day distributions, top locations & devices, bot toggle, CSV export.
 - Manage without reprinting: change the destination, disable/enable, delete permanently.
+- Abuse handling: public report form, Google Safe Browsing check on destinations, and an
+  operator kill switch (`scripts/admin.mjs`).
 - Free tiers only: GitHub Pages, Cloudflare Workers, D1, Turnstile.
 
 ## Architecture

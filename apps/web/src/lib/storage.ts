@@ -32,11 +32,14 @@ function readStore(): StoredCode[] {
   }
 }
 
-function writeStore(items: StoredCode[]): void {
+/** Returns false when the browser refused to store the list (quota, disabled storage). */
+function writeStore(items: StoredCode[]): boolean {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, items }));
+    return true;
   } catch {
-    // Quota exceeded or storage disabled — the list is a convenience, never fatal.
+    // The list is a convenience, never fatal — but callers must not claim it was saved.
+    return false;
   }
 }
 
@@ -44,10 +47,11 @@ export function loadCodes(): StoredCode[] {
   return [...readStore()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
-export function saveCode(code: StoredCode): void {
+/** Adds or replaces a code; returns false when it could not be stored in this browser. */
+export function saveCode(code: StoredCode): boolean {
   const items = readStore().filter((c) => c.slug !== code.slug);
   items.push(code);
-  writeStore(items);
+  return writeStore(items);
 }
 
 export function removeCode(slug: string): void {

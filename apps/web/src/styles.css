@@ -288,7 +288,8 @@ h1 + .muted {
   display: block;
   margin: 1rem 0;
 }
-.field > span {
+.field > span,
+.field > label > span {
   display: block;
   font-size: 0.88rem;
   font-weight: 600;
@@ -297,7 +298,8 @@ h1 + .muted {
 input[type="text"],
 input[type="url"],
 input[type="date"],
-input[type="password"] {
+input[type="password"],
+textarea {
   width: 100%;
   padding: 0.6rem 0.75rem;
   font-size: 1rem;
@@ -313,24 +315,60 @@ input[type="password"] {
 input[type="text"]:hover,
 input[type="url"]:hover,
 input[type="date"]:hover,
-input[type="password"]:hover {
+input[type="password"]:hover,
+textarea:hover {
   border-color: var(--text-muted);
 }
 input[type="text"]:focus-visible,
 input[type="url"]:focus-visible,
 input[type="date"]:focus-visible,
-input[type="password"]:focus-visible {
+input[type="password"]:focus-visible,
+textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-ring);
 }
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: var(--text-muted);
 }
-input[type="checkbox"] {
+textarea {
+  min-height: 6rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+input[type="checkbox"],
+input[type="radio"] {
   accent-color: var(--accent);
   width: 1.05rem;
   height: 1.05rem;
+  flex: none;
+}
+.field-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Radio groups: legend styled like a field label, one option per line. */
+.choice-group {
+  border: none;
+  margin: 1rem 0;
+  padding: 0;
+  min-width: 0;
+}
+.choice-group legend {
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  padding: 0;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0;
 }
 
 button,
@@ -418,6 +456,10 @@ button:disabled {
 }
 .warning-box p {
   margin: 0.4rem 0;
+}
+.warning-box .key-saved {
+  margin-top: 0.6rem;
+  font-weight: 600;
 }
 
 code {
