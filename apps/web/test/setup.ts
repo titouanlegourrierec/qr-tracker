@@ -19,7 +19,8 @@ if (dom !== undefined && typeof globalThis.localStorage === "undefined") {
 }
 
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: "error" });
+  // msw 3 renamed onUnhandledRequest to onUnhandledFrame (it also covers WebSockets).
+  server.listen({ onUnhandledFrame: "error" });
 });
 
 afterEach(() => {
