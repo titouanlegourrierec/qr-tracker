@@ -36,6 +36,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("POST /api/links", () => {
@@ -95,6 +96,59 @@ describe("POST /api/links", () => {
       const body = await res.json<{ error: { code: string } }>();
       expect(body.error.code).toBe("TARGET_URL_INVALID");
     }
+  });
+
+  it("rejects destinations Safe Browsing flags, on creation and on edit", async () => {
+    // Turnstile passes; Safe Browsing flags any URL containing "phish".
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = input instanceof Request ? input.url : input.toString();
+        if (!url.startsWith("https://safebrowsing.googleapis.com/")) {
+          return Promise.resolve(Response.json({ success: true }));
+        }
+        const flagged = typeof init?.body === "string" && init.body.includes("phish");
+        return Promise.resolve(
+          Response.json(flagged ? { matches: [{ threatType: "SOCIAL_ENGINEERING" }] } : {}),
+        );
+      }),
+    );
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const envWithKey = { ...env, SAFE_BROWSING_API_KEY: "test-key" };
+    const post = (targetUrl: string) =>
+      app.request(
+        `${BASE}/api/links`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "CF-Connecting-IP": crypto.randomUUID() },
+          body: JSON.stringify({ targetUrl, turnstileToken: "tok" }),
+        },
+        envWithKey,
+      );
+
+    const rejected = await post("https://phish.example/login");
+    expect(rejected.status).toBe(400);
+    expect((await rejected.json<{ error: { code: string } }>()).error.code).toBe(
+      "TARGET_URL_INVALID",
+    );
+
+    const created = await post("https://example.com/fine");
+    expect(created.status).toBe(201);
+    const { slug, secretKey } = await created.json<CreateLinkResponse>();
+    const retarget = await app.request(
+      `${BASE}/api/links/${slug}`,
+      {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUrl: "https://phish.example/login" }),
+      },
+      envWithKey,
+    );
+    expect(retarget.status).toBe(400);
+    const row = await env.DB.prepare("SELECT target_url FROM links WHERE slug = ?1")
+      .bind(slug)
+      .first<{ target_url: string }>();
+    expect(row?.target_url).toBe("https://example.com/fine");
   });
 
   it("rejects failed Turnstile verification with 403", async () => {

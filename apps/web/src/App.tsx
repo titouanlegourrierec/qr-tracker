@@ -5,6 +5,7 @@ import { CodesPage } from "./pages/CodesPage.js";
 import { CreatePage } from "./pages/CreatePage.js";
 import { NotFoundPage } from "./pages/NotFoundPage.js";
 import { PrivacyPage } from "./pages/PrivacyPage.js";
+import { ReportPage } from "./pages/ReportPage.js";
 import { StatsEntryPage } from "./pages/StatsEntryPage.js";
 import { StatsPage } from "./pages/StatsPage.js";
 
@@ -55,6 +56,7 @@ export function App() {
           <Route path="/stats" element={<StatsEntryPage />} />
           <Route path="/stats/:slug/:key" element={<StatsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/report" element={<ReportPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
@@ -63,6 +65,7 @@ export function App() {
         <p>
           {en.app.copyright(new Date().getFullYear())} ·{" "}
           <Link to="/privacy">{en.app.nav.privacy}</Link> ·{" "}
+          <Link to="/report">{en.app.nav.report}</Link> ·{" "}
           <a href="https://github.com/titouanlegourrierec/qr-tracker">{en.app.sourceCode}</a>
         </p>
       </footer>

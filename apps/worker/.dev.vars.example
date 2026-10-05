@@ -3,3 +3,7 @@
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 # Local-only admin token for the kill-switch endpoints.
 ADMIN_TOKEN=dev-admin-token
+# Local web app (vite dev), where "/" and "/report" on the worker redirect.
+WEB_APP_URL=http://localhost:5173/qr-tracker/
+# Optional Google Safe Browsing key (docs/DEPLOYMENT.md §11). Unset = check skipped.
+# SAFE_BROWSING_API_KEY=

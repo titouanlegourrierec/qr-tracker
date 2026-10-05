@@ -49,7 +49,8 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 - Destinations are stored as `validateTargetUrl(...).url.href`, never the raw input
   (`https:/host` passes validation but resolves against the worker in `Location`).
 - Workers invocation logs are off on purpose (`wrangler.jsonc`): they would log IPs and
-  user-agents. Never pass personal data to `log()`/`logError()` either.
+  user-agents. Never pass personal data to `log()`/`logError()` either — including abuse
+  report details (free text), which also stay out of CI logs (`admin.mjs --fail-if-any`).
 - Link status is three-valued: `active` / `disabled` (owner) / `blocked` (admin only —
   the owner API cannot set or clear it; redirect serves 410 for both non-active states).
 - react-hooks v7 lint (React Compiler rules): no synchronous setState inside effects, no

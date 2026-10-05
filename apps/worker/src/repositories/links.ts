@@ -66,10 +66,11 @@ export async function updateLinkRow(
     .run();
 }
 
-/** Deletes a link and all of its scans atomically (D1 batches are transactional). */
+/** Deletes a link with its scans and abuse reports atomically (D1 batches are transactional). */
 export async function deleteLinkWithScans(db: D1Database, id: number): Promise<void> {
   await db.batch([
     db.prepare("DELETE FROM scans WHERE link_id = ?1").bind(id),
+    db.prepare("DELETE FROM abuse_reports WHERE link_id = ?1").bind(id),
     db.prepare("DELETE FROM links WHERE id = ?1").bind(id),
   ]);
 }

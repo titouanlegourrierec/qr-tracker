@@ -46,7 +46,7 @@ describe("parseRetentionDays", () => {
 });
 
 describe("runDailyMaintenance", () => {
-  it("rotates salts, purges old scans and cleans rate-limit windows", async () => {
+  it("rotates salts, purges old scans and reports, and cleans rate-limit windows", async () => {
     const now = new Date("2026-09-28T03:10:00Z");
     const linkId = await insertLink("cronlnk");
 
@@ -58,6 +58,14 @@ describe("runDailyMaintenance", () => {
     await env.DB.prepare(
       `INSERT INTO scans (link_id, scanned_at, visitor_hash) VALUES
        (?1, '2025-09-01T00:00:00.000Z', 'old'), (?1, '2026-09-27T00:00:00.000Z', 'new')`,
+    )
+      .bind(linkId)
+      .run();
+
+    // Abuse reports: one past retention, one recent.
+    await env.DB.prepare(
+      `INSERT INTO abuse_reports (link_id, reason, details, created_at) VALUES
+       (?1, 'spam', NULL, '2025-09-01T00:00:00.000Z'), (?1, 'phishing', NULL, '2026-09-27T00:00:00.000Z')`,
     )
       .bind(linkId)
       .run();
@@ -74,6 +82,7 @@ describe("runDailyMaintenance", () => {
     const report = await runDailyMaintenance(env, now);
     expect(report.saltsDeleted).toBe(1);
     expect(report.scansPurged).toBe(1);
+    expect(report.reportsPurged).toBe(1);
     expect(report.rateWindowsDeleted).toBe(1);
 
     const salts = await env.DB.prepare("SELECT day FROM salts ORDER BY day").all<{ day: string }>();

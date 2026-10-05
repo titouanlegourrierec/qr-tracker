@@ -44,6 +44,12 @@ every request's headers). The 404/410/503 pages are `no-store` too (Chromium oth
 caches a 410 indefinitely). If D1 fails, the redirect falls back to the last state the
 isolate saw for that slug (bounded in-memory cache, `services/redirect.ts`).
 
+**Abuse** — on creation and on every change of destination, the URL is checked against
+Google Safe Browsing (Lookup API v4, fail-open, active only when `SAFE_BROWSING_API_KEY` is
+set). `POST /api/reports` lets anyone report a link (Turnstile, rate limited by hashed IP,
+no reporter identity stored); the operator lists and dismisses reports through
+`/api/admin/reports` (`scripts/admin.mjs`), and a daily workflow fails while reports wait.
+
 **Stats** — `GET /api/links/:slug/stats`: one atomic D1 batch of aggregate queries
 (grouped by UTC hour/day over `idx_scans_link_time`), then the buckets are mapped to the
 requested IANA timezone with Intl. Unique visitors are per-UTC-day by construction

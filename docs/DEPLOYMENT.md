@@ -54,8 +54,9 @@ pnpm exec wrangler secret put ADMIN_TOKEN            # paste a long random strin
 # generate one:  openssl rand -base64 32
 ```
 
-Keep the `ADMIN_TOKEN` value somewhere safe — it drives the abuse kill switch
-(`node scripts/admin.mjs disable <slug>`).
+Keep the `ADMIN_TOKEN` value somewhere safe — it drives the abuse kill switch and the
+report queue (`node scripts/admin.mjs`, see §11). The optional `SAFE_BROWSING_API_KEY`
+secret is covered in §11 too.
 
 ## 6. GitHub repository configuration
 
@@ -156,6 +157,53 @@ What only you can decide (both need a purchase):
 
 Print QR codes at scale only once the domain they will encode is final: every printed code
 contains the worker's hostname forever.
+
+## 11. Abuse handling
+
+A public QR code service attracts phishing. If a browser vendor or Cloudflare flags the
+worker's domain, every QR code shows a warning page, so handle reports quickly.
+
+**Reputation check (Google Safe Browsing).** With `URL_REPUTATION_ENABLED` set to `"true"`
+(the default in `wrangler.jsonc`), every destination is checked on creation and on each
+change of destination, but only once the API key exists. Until then the check is skipped
+and the worker logs `url_reputation_skipped`. The check fails open: if the API is down,
+links are still created.
+
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a project,
+   enable the **Safe Browsing API**, and create an API key restricted to that API.
+   The Safe Browsing API is for non-commercial use; a commercial service would need Web Risk.
+2. Store it as a worker secret:
+
+   ```bash
+   cd apps/worker
+   pnpm exec wrangler secret put SAFE_BROWSING_API_KEY
+   ```
+
+Refused destinations get `TARGET_URL_INVALID`, and the worker logs `url_reputation_match`
+with the host and threat types.
+
+**Reports.** Anyone can report a code from the web app's _Report abuse_ page. The worker's
+`/` and `/report` redirect there, for people who only know the short-link domain. Triage:
+
+```bash
+export ADMIN_TOKEN=... WORKER_URL=https://qr-tracker.<account>.workers.dev
+node scripts/admin.mjs reports            # newest first, grouped by link
+node scripts/admin.mjs disable <slug>     # block it (the owner cannot lift a block)
+node scripts/admin.mjs dismiss <slug>     # clear its reports once handled
+```
+
+Reports are deleted with their link and purged after `RETENTION_DAYS`.
+
+**Notification.** The worker cannot send e-mail on the free plan. Instead, the daily
+_Abuse reports_ workflow fails when reports are waiting, and GitHub e-mails you about the
+failed run. Its logs show counts only, never report contents. Enable it once:
+
+```bash
+gh secret set ADMIN_TOKEN   # the same value as the worker's ADMIN_TOKEN secret
+```
+
+It reads the worker URL from the `VITE_API_URL` repository variable (§6). Without the
+secret, the job succeeds with a notice and checks nothing.
 
 ## Troubleshooting
 

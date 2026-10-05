@@ -31,8 +31,12 @@
     // localhost:5173 = vite dev, localhost:4173 = vite preview (Playwright E2E).
     "ALLOWED_ORIGINS": "https://titouanlegourrierec.github.io,http://localhost:5173,http://localhost:4173",
     "RETENTION_DAYS": "365",
-    // Optional destination-reputation check (no provider wired; see docs/adr/).
-    "URL_REPUTATION_ENABLED": "false",
+    // The web app, where "/" and "/report" on this worker redirect.
+    "WEB_APP_URL": "https://titouanlegourrierec.github.io/qr-tracker/",
+    // Destination check against Google Safe Browsing on create/edit. Only active once the
+    // SAFE_BROWSING_API_KEY secret is set (docs/DEPLOYMENT.md §11); "false" turns it off.
+    "URL_REPUTATION_ENABLED": "true",
   },
-  // Secrets (wrangler secret put / .dev.vars): TURNSTILE_SECRET_KEY, ADMIN_TOKEN
+  // Secrets (wrangler secret put / .dev.vars): TURNSTILE_SECRET_KEY, ADMIN_TOKEN,
+  // optional SAFE_BROWSING_API_KEY
 }

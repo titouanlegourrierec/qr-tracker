@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   exportCodesJson,
@@ -13,10 +13,14 @@ function code(slug: string, createdAt = "2026-09-28T10:00:00.000Z"): StoredCode 
   return { slug, label: `Label ${slug}`, secretKey: "k".repeat(43), createdAt };
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("local codes storage", () => {
   it("starts empty and persists saved codes", () => {
     expect(loadCodes()).toEqual([]);
-    saveCode(code("aaaaaaa"));
+    expect(saveCode(code("aaaaaaa"))).toBe(true);
     saveCode(code("bbbbbbb", "2026-09-29T10:00:00.000Z"));
     const loaded = loadCodes();
     expect(loaded).toHaveLength(2);
@@ -30,6 +34,14 @@ describe("local codes storage", () => {
     const loaded = loadCodes();
     expect(loaded).toHaveLength(1);
     expect(loaded[0]?.label).toBe("Updated");
+  });
+
+  it("reports when the browser refuses to store the code", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError");
+    });
+    expect(saveCode(code("ccccccc"))).toBe(false);
+    expect(loadCodes()).toEqual([]);
   });
 
   it("removes codes by slug", () => {

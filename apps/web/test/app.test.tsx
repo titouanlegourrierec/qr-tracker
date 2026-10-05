@@ -29,6 +29,13 @@ describe("App shell", () => {
     expect(screen.getByText(/No IP address is ever stored/)).toBeInTheDocument();
   });
 
+  it("links the report form from the footer of every page", async () => {
+    const user = userEvent.setup();
+    renderAt("/privacy");
+    await user.click(screen.getByRole("link", { name: "Report abuse" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Report a QR code" })).toBeInTheDocument();
+  });
+
   it("renders a 404 page for unknown routes", () => {
     renderAt("/no-such-page");
     expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();

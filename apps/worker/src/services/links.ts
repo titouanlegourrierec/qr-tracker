@@ -6,6 +6,7 @@ import { generateSecretKey, generateSlug, sha256Hex, timingSafeEqualHex } from "
 import { log } from "../lib/log.js";
 import { verifyTurnstile } from "../lib/turnstile.js";
 import { checkUrlReputation } from "../lib/url-reputation.js";
+import type { ReputationEnv } from "../lib/url-reputation.js";
 import {
   deleteLinkWithScans,
   findLinkBySlug,
@@ -31,6 +32,13 @@ function normalizeTargetUrl(targetUrl: string, workerHostname: string): string {
   return result.url.href;
 }
 
+/** Rejects destinations Google Safe Browsing knows as phishing or malware. */
+async function assertReputable(targetUrl: string, env: ReputationEnv): Promise<void> {
+  if ((await checkUrlReputation(targetUrl, env)) === "malicious") {
+    throw new ApiError("TARGET_URL_INVALID", "Target URL rejected (reputation)");
+  }
+}
+
 export async function createLink(
   env: Env,
   requestUrl: URL,
@@ -40,9 +48,7 @@ export async function createLink(
   if (!verified) throw new ApiError("TURNSTILE_FAILED", "Turnstile verification failed");
 
   const targetUrl = normalizeTargetUrl(input.targetUrl, requestUrl.hostname);
-  if ((await checkUrlReputation(targetUrl, env)) === "malicious") {
-    throw new ApiError("TARGET_URL_INVALID", "Target URL rejected (reputation)");
-  }
+  await assertReputable(targetUrl, env);
 
   const secretKey = generateSecretKey();
   const secretHash = await sha256Hex(secretKey);
@@ -85,18 +91,22 @@ export async function getLink(db: D1Database, slug: string, secretKey: string) {
 }
 
 export async function updateLink(
-  db: D1Database,
+  env: Env,
   slug: string,
   secretKey: string,
   patch: UpdateLinkRequest,
   workerHostname: string,
 ) {
+  const db = env.DB;
   const row = await authorizeLink(db, slug, secretKey);
   if (row.status === "blocked") {
     throw new ApiError("FORBIDDEN", "This link was blocked by the operator");
   }
   const targetUrl =
     patch.targetUrl === undefined ? undefined : normalizeTargetUrl(patch.targetUrl, workerHostname);
+  // Re-checked on every retarget: otherwise a benign destination could be swapped for a
+  // phishing page once the QR code is printed.
+  if (targetUrl !== undefined) await assertReputable(targetUrl, env);
   const nowIso = new Date().toISOString();
   await updateLinkRow(
     db,

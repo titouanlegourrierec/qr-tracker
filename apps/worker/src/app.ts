@@ -8,6 +8,7 @@ import { securityHeaders } from "./middleware/security-headers.js";
 import { adminRoutes } from "./routes/admin.js";
 import { linksRoutes } from "./routes/links.js";
 import { redirectRoutes } from "./routes/redirect.js";
+import { reportsRoutes } from "./routes/reports.js";
 
 export interface AppBindings {
   Bindings: Env;
@@ -19,8 +20,14 @@ export function createApp(): Hono<AppBindings> {
   app.use(securityHeaders());
   app.use("/api/*", corsMiddleware());
 
+  // People who only know the short-link domain (e.g. from a QR code that led to a
+  // scam) land on the web app, where they can find out who runs it and report the code.
+  app.get("/", (c) => c.redirect(c.env.WEB_APP_URL, 302));
+  app.get("/report", (c) => c.redirect(`${c.env.WEB_APP_URL}#/report`, 302));
+
   app.get("/api/health", (c) => c.json({ ok: true }));
   app.route("/api/links", linksRoutes());
+  app.route("/api/reports", reportsRoutes());
   app.route("/api/admin", adminRoutes());
   app.route("/r", redirectRoutes());
 

@@ -1,6 +1,6 @@
 import { validateTargetUrl } from "@qr-tracker/shared";
 import type { CreateLinkResponse } from "@qr-tracker/shared";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link } from "react-router";
 
@@ -18,9 +18,35 @@ function buildStatsUrl(slug: string, secretKey: string): string {
   return `${origin}${pathname}${search}#/stats/${slug}/${secretKey}`;
 }
 
-function CreationResult({ created }: { created: CreateLinkResponse }) {
+interface Created {
+  response: CreateLinkResponse;
+  /** False when this browser refused to keep the code in "My QR codes". */
+  savedLocally: boolean;
+}
+
+function CreationResult({ created: { response: created, savedLocally } }: { created: Created }) {
   const [svg, setSvg] = useState<string | null>(null);
+  const [keySaved, setKeySaved] = useState(false);
+  const successRef = useRef<HTMLParagraphElement>(null);
   const statsUrl = buildStatsUrl(created.slug, created.secretKey);
+
+  // The form was just replaced under the keyboard focus: move it to the confirmation.
+  useEffect(() => {
+    successRef.current?.focus();
+  }, []);
+
+  // The key is shown only once: until its owner confirms they kept it, closing or
+  // reloading the tab asks for confirmation first.
+  useEffect(() => {
+    if (keySaved) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+    };
+  }, [keySaved]);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +64,7 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
 
   return (
     <section aria-label={en.create.success}>
-      <p className="success-box" role="status">
+      <p ref={successRef} className="success-box" role="status" tabIndex={-1}>
         {en.create.success}
       </p>
 
@@ -54,7 +80,7 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
             <p className="muted">{en.create.shortLink}</p>
             <div className="copy-row">
               <code>{created.shortUrl}</code>
-              <CopyButton value={created.shortUrl} />
+              <CopyButton value={created.shortUrl} label={en.create.copyShortLink} />
             </div>
             <div className="actions-row">
               <button
@@ -90,20 +116,36 @@ function CreationResult({ created }: { created: CreateLinkResponse }) {
         <p>{en.create.keyWarning}</p>
         <div className="copy-row">
           <code>{created.secretKey}</code>
-          <CopyButton value={created.secretKey} />
+          <CopyButton value={created.secretKey} label={en.create.copyKey} />
         </div>
+        <label className="checkbox-label key-saved">
+          <input
+            type="checkbox"
+            checked={keySaved}
+            onChange={(e) => {
+              setKeySaved(e.target.checked);
+            }}
+          />
+          {en.create.keySaved}
+        </label>
       </div>
 
       <div className="card">
         <p>{en.create.statsLink}</p>
         <div className="copy-row">
           <code>{statsUrl}</code>
-          <CopyButton value={statsUrl} />
+          <CopyButton value={statsUrl} label={en.create.copyStatsLink} />
         </div>
         <p className="muted">{en.create.statsLinkHint}</p>
-        <p className="muted">
-          {en.create.savedLocally} (<Link to="/codes">{en.app.nav.codes}</Link>)
-        </p>
+        {savedLocally ? (
+          <p className="muted">
+            {en.create.savedLocally} (<Link to="/codes">{en.app.nav.codes}</Link>)
+          </p>
+        ) : (
+          <p className="error-box" role="alert">
+            {en.create.notSavedLocally}
+          </p>
+        )}
       </div>
     </section>
   );
@@ -120,7 +162,7 @@ export function CreatePage() {
   const [label, setLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState<CreateLinkResponse | null>(null);
+  const [created, setCreated] = useState<Created | null>(null);
 
   function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -142,13 +184,13 @@ export function CreatePage() {
         turnstileToken,
       })
       .then((response) => {
-        saveCode({
+        const savedLocally = saveCode({
           slug: response.slug,
           label: cleanLabel === "" ? null : cleanLabel,
           secretKey: response.secretKey,
           createdAt: new Date().toISOString(),
         });
-        setCreated(response);
+        setCreated({ response, savedLocally });
       })
       .catch((err: unknown) => {
         setError(err instanceof ApiRequestError ? en.errors[err.code] : en.app.error);

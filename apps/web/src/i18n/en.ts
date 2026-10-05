@@ -11,6 +11,7 @@ export const en = {
       codes: "My QR codes",
       stats: "Statistics",
       privacy: "Privacy",
+      report: "Report abuse",
     },
     skipToContent: "Skip to content",
     mainNav: "Main navigation",
@@ -54,11 +55,16 @@ export const en = {
     keyTitle: "Secret key — shown only once",
     keyWarning:
       "Store this key somewhere safe: it is the only way to view this QR code's statistics and manage it. It can never be shown or recovered again.",
-    keySaved: "I saved my key",
+    keySaved: "I have saved my secret key somewhere safe",
+    copyShortLink: "Copy link",
+    copyKey: "Copy key",
+    copyStatsLink: "Copy private link",
     statsLink: "Private statistics link (bookmark it)",
     statsLinkHint:
       "This link contains your secret key after the # symbol: it is never sent to the server.",
     savedLocally: "This QR code was added to “My QR codes” in this browser only.",
+    notSavedLocally:
+      "This browser could not keep a copy in “My QR codes” (private browsing or full storage). Copy the private statistics link now: without it, you will lose access to this QR code's statistics.",
   },
   codes: {
     title: "My QR codes",
@@ -75,6 +81,31 @@ export const en = {
     importError: "Invalid file: this list could not be imported.",
     importSuccess: (n: number) => `${n} QR code${n === 1 ? "" : "s"} imported.`,
     noLabel: "(unnamed)",
+  },
+  report: {
+    title: "Report a QR code",
+    intro:
+      "Did a QR code made with this service lead to a scam, malware or other harmful content? Tell us which one: every report is reviewed, and harmful links are blocked for everyone.",
+    codeLabel: "Short link or code",
+    codeHint:
+      "The address your phone showed when scanning (…/r/ followed by 7 characters), or just those 7 characters.",
+    codePlaceholder: "https://…/r/Ab3xY9z",
+    codeInvalid: "Enter the short link (…/r/ followed by 7 characters) or its 7-character code.",
+    reasonLegend: "What is wrong with it?",
+    reasons: {
+      phishing: "Phishing or scam (asks for passwords, payment details…)",
+      malware: "Malware or an unwanted download",
+      spam: "Spam or misleading advertising",
+      illegal: "Illegal or hateful content",
+      other: "Something else",
+    },
+    detailsLabel: "Details (optional)",
+    detailsHint: "What did you see? Please do not include personal information.",
+    submit: "Send report",
+    sending: "Sending…",
+    success:
+      "Thank you — your report was sent. The QR code will be reviewed and blocked if it breaks the rules.",
+    another: "Report another QR code",
   },
   statsEntry: {
     title: "View statistics",

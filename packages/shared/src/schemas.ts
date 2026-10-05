@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   DEFAULT_TIMEZONE,
   MAX_LABEL_LENGTH,
+  MAX_REPORT_DETAILS_LENGTH,
   MAX_TARGET_URL_LENGTH,
   QUERY_DATE_MAX,
   QUERY_DATE_MIN,
@@ -70,6 +71,21 @@ export const updateLinkRequestSchema = z
     message: "At least one of targetUrl or status is required",
   });
 export type UpdateLinkRequest = z.infer<typeof updateLinkRequestSchema>;
+
+export const reportReasonSchema = z.enum(["phishing", "malware", "spam", "illegal", "other"]);
+export type ReportReason = z.infer<typeof reportReasonSchema>;
+
+/** Anyone can report a QR code (Turnstile-protected): no account, no key. */
+export const createReportRequestSchema = z.object({
+  slug: slugSchema,
+  reason: reportReasonSchema,
+  details: z.string().trim().max(MAX_REPORT_DETAILS_LENGTH).optional(),
+  turnstileToken: z.string().min(1).max(4096),
+});
+export type CreateReportRequest = z.infer<typeof createReportRequestSchema>;
+
+export const createReportResponseSchema = z.object({ received: z.literal(true) });
+export type CreateReportResponse = z.infer<typeof createReportResponseSchema>;
 
 export const adminStatusRequestSchema = z.object({
   status: z.enum(["active", "blocked"]),
