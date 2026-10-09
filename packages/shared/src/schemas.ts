@@ -7,6 +7,7 @@ import {
   MAX_TARGET_URL_LENGTH,
   QUERY_DATE_MAX,
   QUERY_DATE_MIN,
+  SUMMARY_MAX_LINKS,
 } from "./constants.js";
 
 /** True when the string names a timezone the runtime's ICU data knows about. */
@@ -98,14 +99,17 @@ const queryDateSchema = z.iso
     message: `Date must be between ${QUERY_DATE_MIN} and ${QUERY_DATE_MAX}`,
   });
 
+/** IANA timezone the `from`/`to` dates are read in (the dashboard sends the browser's). */
+const timezoneQuerySchema = z
+  .string()
+  .refine(isValidTimezone, { message: "Unknown timezone" })
+  .default(DEFAULT_TIMEZONE);
+
 export const statsQuerySchema = z
   .object({
     from: queryDateSchema.optional(),
     to: queryDateSchema.optional(),
-    tz: z
-      .string()
-      .refine(isValidTimezone, { message: "Unknown timezone" })
-      .default(DEFAULT_TIMEZONE),
+    tz: timezoneQuerySchema,
     includeBots: z.stringbool().default(false),
   })
   .refine((q) => q.from === undefined || q.to === undefined || q.from <= q.to, {
@@ -113,10 +117,12 @@ export const statsQuerySchema = z
   });
 export type StatsQuery = z.infer<typeof statsQuerySchema>;
 
+/** Same filters as the dashboard, so a "7 days" export holds the scans it counts. */
 export const exportQuerySchema = z
   .object({
     from: queryDateSchema.optional(),
     to: queryDateSchema.optional(),
+    tz: timezoneQuerySchema,
     includeBots: z.stringbool().default(false),
   })
   .refine((q) => q.from === undefined || q.to === undefined || q.from <= q.to, {
@@ -182,3 +188,34 @@ export const statsResponseSchema = z.object({
   topIsps: z.array(topEntrySchema),
 });
 export type StatsResponse = z.infer<typeof statsResponseSchema>;
+
+/** "My QR codes": one request summarizes every code kept in the browser, each with its key. */
+export const linkSummariesRequestSchema = z.object({
+  links: z
+    .array(z.object({ slug: slugSchema, secretKey: secretKeySchema }))
+    .min(1)
+    .max(SUMMARY_MAX_LINKS),
+});
+export type LinkSummariesRequest = z.infer<typeof linkSummariesRequestSchema>;
+
+export const linkSummarySchema = z.discriminatedUnion("ok", [
+  z.object({
+    ok: z.literal(true),
+    slug: slugSchema,
+    status: linkStatusSchema,
+    /** Scans by people (bots and link previews excluded) still within the retention period. */
+    scans: countSchema,
+    lastScanAt: z.iso.datetime().nullable(),
+  }),
+  z.object({
+    ok: z.literal(false),
+    slug: slugSchema,
+    /** NOT_FOUND: the link was deleted · UNAUTHORIZED: the key kept for it is wrong. */
+    error: z.enum(["NOT_FOUND", "UNAUTHORIZED"]),
+  }),
+]);
+export type LinkSummary = z.infer<typeof linkSummarySchema>;
+
+/** Summaries come back in the order of the request. */
+export const linkSummariesResponseSchema = z.object({ summaries: z.array(linkSummarySchema) });
+export type LinkSummariesResponse = z.infer<typeof linkSummariesResponseSchema>;

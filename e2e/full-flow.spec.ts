@@ -101,7 +101,11 @@ test("full lifecycle: create → scan → stats → edit → disable → delete"
 
   // --- The code is in the local list ----------------------------------------
   await page.getByRole("link", { name: "My QR codes" }).click();
-  await expect(page.getByRole("cell", { name: "E2E poster" })).toBeVisible();
+  const row = page.getByRole("row", { name: /E2E poster/ });
+  await expect(row).toBeVisible();
+  // Two phone scans, before and after the change of destination; the WhatsApp preview
+  // is left out, as on the dashboard.
+  await expect(row.getByRole("cell", { name: "2", exact: true })).toBeVisible();
   await page.locator("#main").getByRole("link", { name: "Statistics" }).click();
   await expect(page.getByRole("heading", { name: /Statistics — E2E poster/ })).toBeVisible();
 
@@ -109,6 +113,7 @@ test("full lifecycle: create → scan → stats → edit → disable → delete"
   page.on("dialog", (dialog) => void dialog.accept());
   await page.getByRole("button", { name: "Delete permanently" }).click();
   await expect(page).toHaveURL(/#\/codes$/);
+  await expect(page.getByRole("status")).toHaveText("QR code deleted.");
   await expect(page.getByText(/No QR codes saved/)).toBeVisible();
 
   const gone = await request.get(shortUrl, { maxRedirects: 0 });
@@ -116,15 +121,24 @@ test("full lifecycle: create → scan → stats → edit → disable → delete"
   expect(await gone.text()).toContain("does not exist");
 });
 
-test("manual stats entry rejects a wrong key with a friendly error", async ({ page }) => {
-  const { shortUrl } = await createQr(page, "https://example.com/other", "Test key");
+test("manual stats entry: a wrong key is refused, the pasted private link opens", async ({
+  page,
+}) => {
+  const { shortUrl, statsUrl } = await createQr(page, "https://example.com/other", "Test key");
   const slug = shortUrl.split("/r/")[1] ?? "";
 
   await page.goto("#/stats");
   await page.getByLabel(/Link code/).fill(slug);
   await page.getByLabel(/Secret key/).fill("A".repeat(43));
   await page.getByRole("button", { name: "Show statistics" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Invalid secret key.", { timeout: 15_000 });
+  await expect(page.getByRole("alert")).toContainText("Invalid secret key.", {
+    timeout: 15_000,
+  });
+
+  await page.goto("#/stats");
+  await page.getByLabel(/Link code/).fill(statsUrl);
+  await page.getByRole("button", { name: "Show statistics" }).click();
+  await expect(page.getByRole("heading", { name: /Statistics — Test key/ })).toBeVisible();
 });
 
 test("anyone can report a QR code from its short link", async ({ page }) => {

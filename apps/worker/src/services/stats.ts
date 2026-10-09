@@ -4,7 +4,7 @@ import type { DayPoint, HourPoint, StatsQuery, StatsResponse, TopEntry } from "@
 import {
   addDays,
   inclusiveDayCount,
-  localDayStartUtcMs,
+  localDayStartIso,
   localToday,
   utcDayToLocalDate,
   utcInstantToLocalParts,
@@ -42,8 +42,8 @@ export async function computeStats(
     from = addDays(to, -(STATS_MAX_RANGE_DAYS - 1));
   }
 
-  const startIso = new Date(localDayStartUtcMs(from, tz)).toISOString();
-  const endIso = new Date(localDayStartUtcMs(addDays(to, 1), tz)).toISOString();
+  const startIso = localDayStartIso(from, tz);
+  const endIso = localDayStartIso(addDays(to, 1), tz);
 
   const agg = await fetchStatsAggregates(db, link.id, startIso, endIso, includeBots);
 

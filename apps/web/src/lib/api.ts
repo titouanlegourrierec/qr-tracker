@@ -3,7 +3,9 @@ import {
   createReportResponseSchema,
   errorResponseSchema,
   linkSchema,
+  linkSummariesResponseSchema,
   statsResponseSchema,
+  SUMMARY_MAX_LINKS,
 } from "@qr-tracker/shared";
 import type {
   CreateLinkRequest,
@@ -12,6 +14,8 @@ import type {
   CreateReportResponse,
   ErrorCode,
   Link,
+  LinkSummariesRequest,
+  LinkSummary,
   StatsResponse,
   UpdateLinkRequest,
 } from "@qr-tracker/shared";
@@ -104,6 +108,24 @@ export const api = {
 
   getLink(slug: string, secretKey: string): Promise<Link> {
     return requestJson(`/api/links/${slug}`, linkSchema, { headers: authHeader(secretKey) });
+  },
+
+  /** Status and scan counts of the codes in "My QR codes", in order (keys in the body only). */
+  async summarizeLinks(links: LinkSummariesRequest["links"]): Promise<LinkSummary[]> {
+    const chunks: LinkSummariesRequest["links"][] = [];
+    for (let i = 0; i < links.length; i += SUMMARY_MAX_LINKS) {
+      chunks.push(links.slice(i, i + SUMMARY_MAX_LINKS));
+    }
+    const responses = await Promise.all(
+      chunks.map((chunk) =>
+        requestJson("/api/links/summaries", linkSummariesResponseSchema, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ links: chunk }),
+        }),
+      ),
+    );
+    return responses.flatMap((response) => response.summaries);
   },
 
   getStats(slug: string, secretKey: string, params: StatsParams = {}): Promise<StatsResponse> {

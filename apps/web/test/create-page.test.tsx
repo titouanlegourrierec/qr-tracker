@@ -4,6 +4,7 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { qrPngDataUrl } from "../src/lib/qr.js";
 import { loadCodes } from "../src/lib/storage.js";
 import { CreatePage } from "../src/pages/CreatePage.js";
 
@@ -11,7 +12,7 @@ import { KEY, server, SLUG } from "./msw.js";
 
 vi.mock("../src/lib/qr.js", () => ({
   qrSvg: () => Promise.resolve("<svg><title>qr</title></svg>"),
-  qrPngDataUrl: () => Promise.resolve("data:image/png;base64,AAAA"),
+  qrPngDataUrl: vi.fn(() => Promise.resolve("data:image/png;base64,AAAA")),
 }));
 
 const API = "http://localhost:8787";
@@ -140,6 +141,14 @@ describe("CreatePage", () => {
     await createOne(user);
     expect(screen.getByRole("alert")).toHaveTextContent(/could not keep a copy/);
     expect(screen.queryByText(/was added to “My QR codes”/)).not.toBeInTheDocument();
+  });
+
+  it("says so when the QR code image cannot be created", async () => {
+    const user = userEvent.setup();
+    await createOne(user);
+    vi.mocked(qrPngDataUrl).mockRejectedValueOnce(new Error("no canvas"));
+    await user.click(screen.getByRole("button", { name: "Download PNG (print)" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/image could not be created/);
   });
 
   it("pre-validates the URL client-side", async () => {

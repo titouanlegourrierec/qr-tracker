@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 
 import { RATE_LIMITS } from "@qr-tracker/shared";
-import type { CreateLinkResponse, Link } from "@qr-tracker/shared";
+import type { CreateLinkResponse, Link, LinkSummariesResponse } from "@qr-tracker/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../src/app.js";
@@ -333,5 +333,88 @@ describe("GET/PATCH/DELETE /api/links/:slug", () => {
       .first<{ n: number }>();
     expect(linkCount?.n).toBe(0);
     expect(scanCount?.n).toBe(0);
+  });
+});
+
+describe("POST /api/links/summaries", () => {
+  async function summarize(links: unknown): Promise<Response> {
+    return app.request(
+      `${BASE}/api/links/summaries`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "CF-Connecting-IP": crypto.randomUUID() },
+        body: JSON.stringify({ links }),
+      },
+      env,
+    );
+  }
+
+  async function seedScans(slug: string, scans: { at: string; bot?: boolean }[]): Promise<void> {
+    for (const scan of scans) {
+      await env.DB.prepare(
+        `INSERT INTO scans (link_id, scanned_at, is_bot, visitor_hash)
+         SELECT id, ?2, ?3, 'vh' FROM links WHERE slug = ?1`,
+      )
+        .bind(slug, scan.at, scan.bot === true ? 1 : 0)
+        .run();
+    }
+  }
+
+  it("summarizes each code with its own key, in request order", async () => {
+    const scanned = await createTestLink();
+    const quiet = await createTestLink();
+    await seedScans(scanned.slug, [
+      { at: "2026-09-10T08:00:00.000Z" },
+      { at: "2026-09-12T18:30:00.000Z" },
+      // Link previews do not count, here as on the dashboard.
+      { at: "2026-09-13T09:00:00.000Z", bot: true },
+    ]);
+    await env.DB.prepare("UPDATE links SET status = 'disabled' WHERE slug = ?1")
+      .bind(quiet.slug)
+      .run();
+
+    const res = await summarize([
+      { slug: quiet.slug, secretKey: quiet.secretKey },
+      { slug: scanned.slug, secretKey: scanned.secretKey },
+    ]);
+    expect(res.status).toBe(200);
+    const body = await res.json<LinkSummariesResponse>();
+    expect(body.summaries).toEqual([
+      { ok: true, slug: quiet.slug, status: "disabled", scans: 0, lastScanAt: null },
+      {
+        ok: true,
+        slug: scanned.slug,
+        status: "active",
+        scans: 2,
+        lastScanAt: "2026-09-12T18:30:00.000Z",
+      },
+    ]);
+  });
+
+  it("fails only the entries with a wrong key or a deleted link", async () => {
+    const mine = await createTestLink();
+    const other = await createTestLink();
+    const res = await summarize([
+      { slug: other.slug, secretKey: mine.secretKey },
+      { slug: "Zz9yX8w", secretKey: mine.secretKey },
+      { slug: mine.slug, secretKey: mine.secretKey },
+    ]);
+    const body = await res.json<LinkSummariesResponse>();
+    expect(body.summaries).toEqual([
+      { ok: false, slug: other.slug, error: "UNAUTHORIZED" },
+      { ok: false, slug: "Zz9yX8w", error: "NOT_FOUND" },
+      { ok: true, slug: mine.slug, status: "active", scans: 0, lastScanAt: null },
+    ]);
+  });
+
+  it("rejects empty, oversized or malformed lists", async () => {
+    expect((await summarize([])).status).toBe(400);
+    expect((await summarize([{ slug: "bad", secretKey: "x" }])).status).toBe(400);
+    const created = await createTestLink();
+    const tooMany = Array.from({ length: 51 }, () => ({
+      slug: created.slug,
+      secretKey: created.secretKey,
+    }));
+    expect((await summarize(tooMany)).status).toBe(400);
   });
 });

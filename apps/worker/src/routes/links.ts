@@ -3,6 +3,7 @@ import {
   CSV_COLUMNS,
   EXPORT_MAX_ROWS,
   exportQuerySchema,
+  linkSummariesRequestSchema,
   slugSchema,
   statsQuerySchema,
   updateLinkRequestSchema,
@@ -14,10 +15,17 @@ import { z } from "zod";
 import type { AppBindings } from "../app.js";
 import { ApiError } from "../lib/api-error.js";
 import { toCsv } from "../lib/csv.js";
-import { addDays } from "../lib/timezone.js";
+import { addDays, localDayStartIso } from "../lib/timezone.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 import { fetchScansForExport } from "../repositories/stats.js";
-import { authorizeLink, createLink, deleteLink, getLink, updateLink } from "../services/links.js";
+import {
+  authorizeLink,
+  createLink,
+  deleteLink,
+  getLink,
+  summarizeLinks,
+  updateLink,
+} from "../services/links.js";
 import { computeStats } from "../services/stats.js";
 
 /** Parses the request body against a schema, mapping failures to VALIDATION_ERROR. */
@@ -68,6 +76,13 @@ export function linksRoutes(): Hono<AppBindings> {
     return c.json(created, 201);
   });
 
+  // Keys travel in the body (never in a URL); one request covers a whole "My QR codes" list,
+  // so it costs a single rate-limit hit.
+  routes.post("/summaries", rateLimit("authenticated", { failOpen: true }), async (c) => {
+    const body = await parseBody(c, linkSummariesRequestSchema);
+    return c.json({ summaries: await summarizeLinks(c.env.DB, body.links) });
+  });
+
   routes.get(
     "/:slug",
     rateLimit("authenticated", { failOpen: true, keySuffix: slugSuffix }),
@@ -95,13 +110,15 @@ export function linksRoutes(): Hono<AppBindings> {
       const query = parseQuery(c, exportQuerySchema);
       const slug = getSlugParam(c);
       const link = await authorizeLink(c.env.DB, slug, getBearerToken(c));
-      // Export filters use UTC day boundaries (raw rows are UTC timestamps).
+      // Days are read in the dashboard's timezone, like the stats; rows stay UTC timestamps.
       const rows = await fetchScansForExport(
         c.env.DB,
         link.id,
         {
-          ...(query.from !== undefined ? { startIso: `${query.from}T00:00:00.000Z` } : {}),
-          ...(query.to !== undefined ? { endIso: `${addDays(query.to, 1)}T00:00:00.000Z` } : {}),
+          ...(query.from !== undefined ? { startIso: localDayStartIso(query.from, query.tz) } : {}),
+          ...(query.to !== undefined
+            ? { endIso: localDayStartIso(addDays(query.to, 1), query.tz) }
+            : {}),
         },
         query.includeBots,
         EXPORT_MAX_ROWS,

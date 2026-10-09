@@ -66,6 +66,17 @@ describe("App shell", () => {
     await user.type(screen.getByLabelText(/Link code/), "bad");
     await user.type(screen.getByLabelText(/Secret key/), "short");
     await user.click(screen.getByRole("button", { name: "Show statistics" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Badly formatted");
+    expect(screen.getByRole("alert")).toHaveTextContent("Paste the whole private link");
+  });
+
+  it("opens the dashboard from a pasted private link, without the key field", async () => {
+    const user = userEvent.setup();
+    renderAt("/stats");
+    await user.type(
+      screen.getByLabelText(/Link code/),
+      `https://someone.github.io/qr-tracker/#/stats/${SLUG}/${KEY}`,
+    );
+    await user.click(screen.getByRole("button", { name: "Show statistics" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Statistics" })).toBeInTheDocument();
   });
 });

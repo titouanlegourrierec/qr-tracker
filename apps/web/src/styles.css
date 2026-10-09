@@ -436,6 +436,13 @@ button:disabled {
   margin: 0.9rem 0;
   font-weight: 500;
 }
+/* An error with an action under it (e.g. Retry). */
+.error-box > p {
+  margin: 0;
+}
+.error-box > button {
+  margin-top: 0.6rem;
+}
 .success-box {
   background: var(--success-soft);
   border: 1px solid color-mix(in srgb, var(--success) 40%, var(--border));
@@ -645,6 +652,9 @@ details.chart-data summary {
   flex-direction: column;
   gap: 0.9rem;
 }
+.toolbar > .error-box {
+  margin: 0;
+}
 .toolbar-row {
   display: flex;
   flex-wrap: wrap;
@@ -784,6 +794,10 @@ details.chart-data summary {
 .map-hint {
   font-size: 0.85rem;
   margin: 0.6rem 0 0;
+}
+.stats-note {
+  font-size: 0.85rem;
+  margin: 0;
 }
 
 /* QR preview */

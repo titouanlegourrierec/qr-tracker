@@ -35,9 +35,14 @@ function shiftDate(date: string, days: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
+/** Date and time in the visitor's own locale (the browser's language settings). */
 function formatDateTime(iso: string | null, tz: string): string {
   if (iso === null) return en.stats.totals.never;
-  return new Date(iso).toLocaleString("en-GB", { timeZone: tz });
+  return new Date(iso).toLocaleString(undefined, {
+    timeZone: tz,
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 function errorMessage(err: unknown): string {
@@ -86,6 +91,9 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
   const [toInput, setToInput] = useState("");
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  // Bumped by "Retry" to run the request again with the same filters.
+  const [reloadToken, setReloadToken] = useState(0);
   // While refetching (filter change), the previous dashboard stays visible.
   const loading = data === null && error === null;
 
@@ -114,7 +122,7 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
     return () => {
       stale = true;
     };
-  }, [validParams, slug, secretKey, tz, filters]);
+  }, [validParams, slug, secretKey, tz, filters, reloadToken]);
 
   if (!validParams) {
     return (
@@ -155,8 +163,11 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
   }
 
   function exportCsv() {
+    setExportError(null);
     api
       .exportCsv(slug, secretKey, {
+        // Same days as the dashboard: the export reads the dates in the browser's timezone.
+        tz,
         includeBots: filters.includeBots,
         ...(filters.from !== undefined ? { from: filters.from } : {}),
         ...(filters.to !== undefined ? { to: filters.to } : {}),
@@ -165,7 +176,7 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
         downloadBlob(blob, `qr-${slug}-scans.csv`);
       })
       .catch((err: unknown) => {
-        setError(errorMessage(err));
+        setExportError(errorMessage(err));
       });
   }
 
@@ -195,9 +206,18 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
         </p>
       )}
       {error !== null && (
-        <p className="error-box" role="alert">
-          {error}
-        </p>
+        <div className="error-box" role="alert">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setReloadToken((token) => token + 1);
+            }}
+          >
+            {en.app.retry}
+          </button>
+        </div>
       )}
 
       {link !== null && stats !== null && (
@@ -272,6 +292,12 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
                 {en.stats.exportCsv}
               </button>
             </div>
+            {exportError !== null && (
+              <p className="error-box" role="alert">
+                {exportError}
+              </p>
+            )}
+            <p className="muted stats-note">{en.stats.timezoneNote(stats.range.tz)}</p>
           </div>
 
           <div className="totals-grid">
@@ -296,6 +322,7 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
               <span className="label">{en.stats.totals.lastScan}</span>
             </div>
           </div>
+          <p className="muted stats-note">{en.stats.visitorsNote}</p>
 
           {stats.totals.scans === 0 ? (
             <p className="card">{en.stats.empty}</p>

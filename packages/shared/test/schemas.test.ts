@@ -10,6 +10,8 @@ import {
   exportQuerySchema,
   isValidTimezone,
   linkSchema,
+  linkSummariesRequestSchema,
+  linkSummariesResponseSchema,
   MAX_LABEL_LENGTH,
   QUERY_DATE_MAX,
   QUERY_DATE_MIN,
@@ -18,6 +20,7 @@ import {
   SLUG_LENGTH,
   slugSchema,
   statsQuerySchema,
+  SUMMARY_MAX_LINKS,
   statsResponseSchema,
   updateLinkRequestSchema,
 } from "../src/index.js";
@@ -124,6 +127,41 @@ describe("exportQuerySchema", () => {
     expect(exportQuerySchema.safeParse({ from: "2026-02-01", to: "2026-01-01" }).success).toBe(
       false,
     );
+  });
+
+  it("reads dates in a timezone, like the stats", () => {
+    expect(exportQuerySchema.parse({}).tz).toBe(DEFAULT_TIMEZONE);
+    expect(exportQuerySchema.parse({ tz: "Asia/Seoul" }).tz).toBe("Asia/Seoul");
+    expect(exportQuerySchema.safeParse({ tz: "Mars/Olympus" }).success).toBe(false);
+  });
+});
+
+describe("link summaries", () => {
+  const item = { slug: "Ab3xY9z", secretKey: "k".repeat(SECRET_KEY_LENGTH) };
+
+  it("accepts 1 to SUMMARY_MAX_LINKS well-formed codes", () => {
+    expect(linkSummariesRequestSchema.safeParse({ links: [item] }).success).toBe(true);
+    expect(linkSummariesRequestSchema.safeParse({ links: [] }).success).toBe(false);
+    const tooMany = Array.from({ length: SUMMARY_MAX_LINKS + 1 }, () => item);
+    expect(linkSummariesRequestSchema.safeParse({ links: tooMany }).success).toBe(false);
+    expect(
+      linkSummariesRequestSchema.safeParse({ links: [{ ...item, secretKey: "short" }] }).success,
+    ).toBe(false);
+  });
+
+  it("validates found and failed summaries", () => {
+    const result = linkSummariesResponseSchema.safeParse({
+      summaries: [
+        { ok: true, slug: "Ab3xY9z", status: "active", scans: 3, lastScanAt: null },
+        { ok: false, slug: "Zz9yX8w", error: "NOT_FOUND" },
+      ],
+    });
+    expect(result.success).toBe(true);
+    expect(
+      linkSummariesResponseSchema.safeParse({
+        summaries: [{ ok: false, slug: "Zz9yX8w", error: "INTERNAL" }],
+      }).success,
+    ).toBe(false);
   });
 });
 

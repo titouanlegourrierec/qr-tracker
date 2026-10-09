@@ -27,6 +27,26 @@ describe("api client", () => {
     expect(created.slug).toBe(SLUG);
   });
 
+  it("summarizes long lists in chunks the worker accepts, keeping their order", async () => {
+    const sizes: number[] = [];
+    server.use(
+      http.post(`${API}/api/links/summaries`, async ({ request }) => {
+        const body = (await request.json()) as { links: { slug: string }[] };
+        sizes.push(body.links.length);
+        return HttpResponse.json({
+          summaries: body.links.map(({ slug }) => ({ ok: false, slug, error: "NOT_FOUND" })),
+        });
+      }),
+    );
+    const links = Array.from({ length: 120 }, (_, i) => ({
+      slug: `abc${String(i).padStart(4, "0")}`,
+      secretKey: KEY,
+    }));
+    const summaries = await api.summarizeLinks(links);
+    expect(sizes.sort((a, b) => b - a)).toEqual([50, 50, 20]);
+    expect(summaries.map((s) => s.slug)).toEqual(links.map((l) => l.slug));
+  });
+
   it("sends the secret key as a Bearer header, never in the URL", async () => {
     let seenAuth: string | null = null;
     let seenUrl = "";
