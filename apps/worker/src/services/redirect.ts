@@ -1,7 +1,7 @@
 import { LinkCache } from "../lib/link-cache.js";
 import type { RedirectLink } from "../lib/link-cache.js";
 import { logError } from "../lib/log.js";
-import { findLinkBySlug } from "../repositories/links.js";
+import { effectiveStatus, findLinkBySlug } from "../repositories/links.js";
 
 const LINK_CACHE_MAX_ENTRIES = 1_000;
 const LINK_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -25,8 +25,14 @@ export async function lookupLinkForRedirect(db: D1Database, slug: string): Promi
       linkCache.forget(slug);
       return { kind: "missing" };
     }
-    linkCache.remember(row);
-    return { kind: "found", link: row, fromCache: false };
+    const link: RedirectLink = {
+      id: row.id,
+      slug: row.slug,
+      target_url: row.target_url,
+      status: effectiveStatus(row),
+    };
+    linkCache.remember(link);
+    return { kind: "found", link, fromCache: false };
   } catch (error) {
     const cached = linkCache.recall(slug);
     logError("link_lookup_failed", error, { slug, servedFromCache: cached !== null });

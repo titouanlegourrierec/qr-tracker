@@ -12,8 +12,9 @@ import {
   findLinkBySlug,
   insertLink,
   isUniqueConstraintError,
+  effectiveStatus,
   toLink,
-  updateLinkRow,
+  updateLinkAsOwner,
 } from "../repositories/links.js";
 import type { LinkRow } from "../repositories/links.js";
 
@@ -99,7 +100,7 @@ export async function updateLink(
 ) {
   const db = env.DB;
   const row = await authorizeLink(db, slug, secretKey);
-  if (row.status === "blocked") {
+  if (effectiveStatus(row) === "blocked") {
     throw new ApiError("FORBIDDEN", "This link was blocked by the operator");
   }
   const targetUrl =
@@ -108,7 +109,7 @@ export async function updateLink(
   // phishing page once the QR code is printed.
   if (targetUrl !== undefined) await assertReputable(targetUrl, env);
   const nowIso = new Date().toISOString();
-  await updateLinkRow(
+  const applied = await updateLinkAsOwner(
     db,
     row.id,
     {
@@ -117,6 +118,8 @@ export async function updateLink(
     },
     nowIso,
   );
+  // Blocked between the check above and the update: the guarded UPDATE changed nothing.
+  if (!applied) throw new ApiError("FORBIDDEN", "This link was blocked by the operator");
   const updated = await findLinkBySlug(db, slug);
   if (updated === null) throw new ApiError("INTERNAL", "Link vanished during update");
   log("link_updated", { slug, statusChanged: patch.status !== undefined });

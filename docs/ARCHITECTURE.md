@@ -55,8 +55,11 @@ no reporter identity stored); the operator lists and dismisses reports through
 requested IANA timezone with Intl. Unique visitors are per-UTC-day by construction
 (the salt rotates at UTC midnight).
 
-**Kill switch** — links have three statuses: `active`, `disabled` (owner),
-`blocked` (admin only, owner cannot lift it; enforced by schema _and_ service).
+**Kill switch** — the API exposes three statuses: `active`, `disabled` (owner) and
+`blocked` (admin only). In D1 the owner's choice (`status`: active/disabled) and the
+operator's block (`blocked_at`) are separate columns: a block never overwrites the owner's
+choice, lifting it restores that choice, and owner updates run
+`UPDATE … WHERE blocked_at IS NULL`, so a concurrent owner request cannot undo a block.
 
 ## Worker layering
 

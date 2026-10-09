@@ -6,9 +6,17 @@ export interface LinkRow {
   target_url: string;
   label: string | null;
   secret_hash: string;
+  /** The owner's choice only (active/disabled); operator blocks live in blocked_at. */
   status: LinkStatus;
+  /** Set while the operator blocks the link (admin kill switch), null otherwise. */
+  blocked_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** What the link does now: an operator block overrides the owner's choice. */
+export function effectiveStatus(row: Pick<LinkRow, "status" | "blocked_at">): LinkStatus {
+  return row.blocked_at === null ? row.status : "blocked";
 }
 
 export function toLink(row: LinkRow): Link {
@@ -16,7 +24,7 @@ export function toLink(row: LinkRow): Link {
     slug: row.slug,
     targetUrl: row.target_url,
     label: row.label,
-    status: row.status,
+    status: effectiveStatus(row),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -48,22 +56,40 @@ export async function findLinkBySlug(db: D1Database, slug: string): Promise<Link
   return db.prepare("SELECT * FROM links WHERE slug = ?1").bind(slug).first<LinkRow>();
 }
 
-export async function updateLinkRow(
+/**
+ * Owner update. Returns false when the link is blocked: the check is part of the UPDATE,
+ * so an owner request racing an operator block cannot undo it.
+ */
+export async function updateLinkAsOwner(
   db: D1Database,
   id: number,
-  patch: { targetUrl?: string; status?: LinkStatus },
+  patch: { targetUrl?: string; status?: "active" | "disabled" },
   nowIso: string,
-): Promise<void> {
-  await db
+): Promise<boolean> {
+  const result = await db
     .prepare(
       `UPDATE links
        SET target_url = COALESCE(?1, target_url),
            status = COALESCE(?2, status),
            updated_at = ?3
-       WHERE id = ?4`,
+       WHERE id = ?4 AND blocked_at IS NULL`,
     )
     .bind(patch.targetUrl ?? null, patch.status ?? null, nowIso, id)
     .run();
+  return result.meta.changes > 0;
+}
+
+/** Operator kill switch. Never touches the owner's status, so unblocking restores it. */
+export async function setLinkBlocked(
+  db: D1Database,
+  id: number,
+  blocked: boolean,
+  nowIso: string,
+): Promise<void> {
+  const sql = blocked
+    ? "UPDATE links SET blocked_at = COALESCE(blocked_at, ?1), updated_at = ?1 WHERE id = ?2"
+    : "UPDATE links SET blocked_at = NULL, updated_at = ?1 WHERE id = ?2";
+  await db.prepare(sql).bind(nowIso, id).run();
 }
 
 /** Deletes a link with its scans and abuse reports atomically (D1 batches are transactional). */

@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import worker from "../src/index.js";
 import { sha256Hex } from "../src/lib/crypto.js";
+import { setLinkBlocked, updateLinkAsOwner } from "../src/repositories/links.js";
 import { parseRetentionDays, runDailyMaintenance } from "../src/services/cron.js";
 
 const app = createApp();
@@ -242,5 +243,68 @@ describe("POST /api/admin/links/:slug/status", () => {
     // The redirect stays dead.
     const redirect = await app.request(`${BASE}/r/${slug}`, {}, env, createExecutionContext());
     expect(redirect.status).toBe(410);
+  });
+
+  it("restores the owner's own choice when a block is lifted", async () => {
+    const created = await app.request(
+      `${BASE}/api/links`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "CF-Connecting-IP": crypto.randomUUID() },
+        body: JSON.stringify({ targetUrl: "https://example.com/paused", turnstileToken: "tok" }),
+      },
+      env,
+    );
+    const { slug, secretKey } = await created.json<{ slug: string; secretKey: string }>();
+    const ownerPatch = (body: object) =>
+      app.request(
+        `${BASE}/api/links/${slug}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${secretKey}`,
+            "Content-Type": "application/json",
+            "CF-Connecting-IP": crypto.randomUUID(),
+          },
+          body: JSON.stringify(body),
+        },
+        env,
+      );
+    const adminStatus = (status: string) =>
+      app.request(
+        `${BASE}/api/admin/links/${slug}/status`,
+        { method: "POST", headers: headers("test-admin-token"), body: JSON.stringify({ status }) },
+        env,
+      );
+
+    expect((await ownerPatch({ status: "disabled" })).status).toBe(200);
+    expect((await (await adminStatus("blocked")).json<{ status: string }>()).status).toBe(
+      "blocked",
+    );
+    // Lifting the block does not re-activate a link its owner had paused.
+    expect((await (await adminStatus("active")).json<{ status: string }>()).status).toBe(
+      "disabled",
+    );
+    const redirect = await app.request(`${BASE}/r/${slug}`, {}, env, createExecutionContext());
+    expect(redirect.status).toBe(410);
+    // The owner can manage it again.
+    expect((await ownerPatch({ status: "active" })).status).toBe(200);
+  });
+
+  it("never lets an owner update undo a block that landed after its check", async () => {
+    const id = await insertLink("racelnk");
+    await setLinkBlocked(env.DB, id, true, "2026-10-09T00:00:00.000Z");
+    // What the owner's PATCH runs after having read the row while it was still active.
+    const applied = await updateLinkAsOwner(
+      env.DB,
+      id,
+      { status: "disabled" },
+      "2026-10-09T00:00:01.000Z",
+    );
+    expect(applied).toBe(false);
+    const row = await env.DB.prepare("SELECT status, blocked_at FROM links WHERE id = ?1")
+      .bind(id)
+      .first<{ status: string; blocked_at: string | null }>();
+    expect(row).toEqual({ status: "active", blocked_at: "2026-10-09T00:00:00.000Z" });
   });
 });
