@@ -3,6 +3,7 @@ import { Link, NavLink, Route, Routes } from "react-router";
 import { en } from "./i18n/en.js";
 import { CodesPage } from "./pages/CodesPage.js";
 import { CreatePage } from "./pages/CreatePage.js";
+import { LegalPage } from "./pages/LegalPage.js";
 import { NotFoundPage } from "./pages/NotFoundPage.js";
 import { PrivacyPage } from "./pages/PrivacyPage.js";
 import { ReportPage } from "./pages/ReportPage.js";
@@ -56,6 +57,7 @@ export function App() {
           <Route path="/stats" element={<StatsEntryPage />} />
           <Route path="/stats/:slug/:key" element={<StatsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/legal" element={<LegalPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
@@ -65,6 +67,7 @@ export function App() {
         <p>
           {en.app.copyright(new Date().getFullYear())} ·{" "}
           <Link to="/privacy">{en.app.nav.privacy}</Link> ·{" "}
+          <Link to="/legal">{en.app.nav.legal}</Link> ·{" "}
           <Link to="/report">{en.app.nav.report}</Link> ·{" "}
           <a href="https://github.com/titouanlegourrierec/qr-tracker">{en.app.sourceCode}</a>
         </p>

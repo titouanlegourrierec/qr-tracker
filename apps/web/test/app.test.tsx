@@ -36,6 +36,16 @@ describe("App shell", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Report a QR code" })).toBeInTheDocument();
   });
 
+  it("renders the legal notice with the publisher's contact, linked from the footer", async () => {
+    const user = userEvent.setup();
+    renderAt("/");
+    await user.click(screen.getByRole("link", { name: "Legal notice" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Legal notice" })).toBeInTheDocument();
+    expect(screen.getByText(/Titouan Le Gourrierec, who is/)).toBeInTheDocument();
+    const mail = screen.getAllByRole("link", { name: "titouanlegourrierec@kaist.ac.kr" })[0];
+    expect(mail).toHaveAttribute("href", "mailto:titouanlegourrierec@kaist.ac.kr");
+  });
+
   it("renders a 404 page for unknown routes", () => {
     renderAt("/no-such-page");
     expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();

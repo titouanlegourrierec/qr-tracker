@@ -7,7 +7,7 @@ import type { AppBindings } from "../app.js";
 import { ApiError } from "../lib/api-error.js";
 import { sha256Hex, timingSafeEqualHex } from "../lib/crypto.js";
 import { log } from "../lib/log.js";
-import { findLinkBySlug, toLink, updateLinkRow } from "../repositories/links.js";
+import { findLinkBySlug, setLinkBlocked, toLink } from "../repositories/links.js";
 import { deleteReportsForLink, listReports } from "../repositories/reports.js";
 
 import { getBearerToken } from "./links.js";
@@ -41,7 +41,13 @@ export function adminRoutes(): Hono<AppBindings> {
     const row = await findLinkBySlug(c.env.DB, slug);
     if (row === null) return c.json(errorBody("NOT_FOUND", "Link not found"), 404);
 
-    await updateLinkRow(c.env.DB, row.id, { status: parsed.data.status }, new Date().toISOString());
+    // "active" lifts the block; the owner's own active/disabled choice is restored.
+    await setLinkBlocked(
+      c.env.DB,
+      row.id,
+      parsed.data.status === "blocked",
+      new Date().toISOString(),
+    );
     log("admin_status_change", { slug, status: parsed.data.status });
     const updated = await findLinkBySlug(c.env.DB, slug);
     if (updated === null) throw new ApiError("INTERNAL", "Link vanished during update");

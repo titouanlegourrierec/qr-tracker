@@ -133,6 +133,10 @@ export const topEntrySchema = z.object({
 });
 export type TopEntry = z.infer<typeof topEntrySchema>;
 
+/** Cities are ranked per country, so homonyms (Paris, FR / Paris, US) stay apart. */
+export const topCityEntrySchema = topEntrySchema.extend({ country: z.string().nullable() });
+export type TopCityEntry = z.infer<typeof topCityEntrySchema>;
+
 const countSchema = z.number().int().nonnegative();
 
 export const dayPointSchema = z.object({
@@ -170,7 +174,7 @@ export const statsResponseSchema = z.object({
   /** Scan counts indexed by local day of week, 0 = Monday … 6 = Sunday. */
   dayOfWeek: z.array(countSchema).length(7),
   topCountries: z.array(topEntrySchema),
-  topCities: z.array(topEntrySchema),
+  topCities: z.array(topCityEntrySchema),
   topDevices: z.array(topEntrySchema),
   topOs: z.array(topEntrySchema),
   topBrowsers: z.array(topEntrySchema),

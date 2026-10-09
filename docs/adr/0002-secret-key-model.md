@@ -31,5 +31,4 @@ and compares digests with `crypto.subtle.timingSafeEqual`. The key travels only 
   the "My QR codes" localStorage list plus its JSON export mitigate accidental loss.
 - Anyone with the link's key has full control of that link (no revocation short of
   deleting the link). Acceptable for the threat model of a lab tool.
-- The admin kill switch uses a separate status value (`blocked`) that the owner's API
-  surface cannot set or clear.
+- The admin kill switch (`blocked`, stored in its own `blocked_at` column since migration 0003) cannot be set or cleared through the owner's API surface.

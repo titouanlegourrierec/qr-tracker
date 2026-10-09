@@ -1,7 +1,6 @@
 import { DEFAULT_RETENTION_DAYS } from "@qr-tracker/shared";
 
 import { log } from "../lib/log.js";
-import { addDays } from "../lib/timezone.js";
 import { deleteRateLimitWindowsBefore } from "../repositories/rate-limits.js";
 import { deleteReportsBefore } from "../repositories/reports.js";
 import { getOrCreateDailySalt, deleteSaltsBefore } from "../repositories/salts.js";
@@ -21,15 +20,17 @@ export interface MaintenanceReport {
 }
 
 /**
- * Daily maintenance (cron): rotate the salt (create today's, drop all before
- * yesterday), purge scans and abuse reports past retention, drop expired rate-limit
- * windows.
+ * Daily maintenance (cron, just after midnight UTC): rotate the salt (create today's,
+ * drop every older one), purge scans and abuse reports past retention, drop expired
+ * rate-limit windows.
  */
 export async function runDailyMaintenance(env: Env, now = new Date()): Promise<MaintenanceReport> {
   const today = now.toISOString().slice(0, 10);
   await getOrCreateDailySalt(env.DB, today);
-  // Keep yesterday's salt so scans right around midnight UTC stay consistent.
-  const saltsDeleted = await deleteSaltsBefore(env.DB, addDays(today, -1));
+  // Only today's salt is ever read (scans and the rate limiter use the current UTC day).
+  // Deleting the others right away makes yesterday's hashes irreversible: with the cron
+  // at 00:05 UTC, a salt lives about 24 hours, as the privacy page promises.
+  const saltsDeleted = await deleteSaltsBefore(env.DB, today);
 
   const retentionDays = parseRetentionDays(env.RETENTION_DAYS);
   const cutoffIso = new Date(now.getTime() - retentionDays * 86_400_000).toISOString();

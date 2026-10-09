@@ -1,8 +1,7 @@
 name: CI
 
+# Pull requests only: on main, the Deploy workflow runs these same jobs as its gate.
 on:
-  push:
-    branches: [main]
   pull_request:
 
 permissions:
@@ -10,7 +9,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   check:

@@ -51,8 +51,10 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 - Workers invocation logs are off on purpose (`wrangler.jsonc`): they would log IPs and
   user-agents. Never pass personal data to `log()`/`logError()` either — including abuse
   report details (free text), which also stay out of CI logs (`admin.mjs --fail-if-any`).
-- Link status is three-valued: `active` / `disabled` (owner) / `blocked` (admin only —
-  the owner API cannot set or clear it; redirect serves 410 for both non-active states).
+- Link status is three-valued in the API: `active` / `disabled` (owner) / `blocked`
+  (admin only; redirect serves 410 for both non-active states). In D1, `status` holds only
+  the owner's choice and `blocked_at` the operator block — use `effectiveStatus(row)`,
+  never write `'blocked'` to `status`, and keep owner updates guarded (`updateLinkAsOwner`).
 - react-hooks v7 lint (React Compiler rules): no synchronous setState inside effects, no
   property access on hook-returned objects holding refs during render (destructure them).
 - If an E2E run is interrupted, orphaned servers can block ports 8787/4173. Clean with:

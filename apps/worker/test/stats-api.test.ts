@@ -114,11 +114,52 @@ describe("GET /api/links/:slug/stats", () => {
     expect(body.byHour).not.toBeNull();
     expect(body.byHour?.[0]).toEqual({ hour: "2026-09-07T10:00", scans: 1 });
 
+    expect(body.topCities).toEqual([
+      { value: "Paris", country: "FR", count: 3 },
+      { value: "Berlin", country: "DE", count: 1 },
+    ]);
     expect(body.topCountries[0]).toEqual({ value: "FR", count: 3 });
     expect(body.topCountries[1]).toEqual({ value: "DE", count: 1 });
     expect(body.topDevices[0]?.value).toBe("mobile");
     expect(body.topLanguages[0]?.value).toBe("fr");
     expect(body.topIsps[0]?.value).toBe("Orange");
+  });
+
+  it("ranks cities per country so homonyms stay apart", async () => {
+    const now = "2026-09-01T00:00:00.000Z";
+    const key = "c".repeat(43);
+    const link = await env.DB.prepare(
+      `INSERT INTO links (slug, target_url, label, secret_hash, status, created_at, updated_at)
+       VALUES ('citylnk', 'https://example.com/', NULL, ?1, 'active', ?2, ?2) RETURNING id`,
+    )
+      .bind(await sha256Hex(key), now)
+      .first<{ id: number }>();
+    for (const [country, city] of [
+      ["FR", "Paris"],
+      ["FR", "Paris"],
+      ["US", "Paris"],
+      ["FR", null],
+      ["DE", null],
+    ] as const) {
+      await env.DB.prepare(
+        `INSERT INTO scans (link_id, scanned_at, country, city, visitor_hash)
+         VALUES (?1, '2026-09-10T12:00:00.000Z', ?2, ?3, 'h')`,
+      )
+        .bind(link?.id, country, city)
+        .run();
+    }
+    const res = await app.request(
+      `${BASE}/api/links/citylnk/stats?from=2026-09-10&to=2026-09-10&tz=UTC`,
+      { headers: { Authorization: `Bearer ${key}` } },
+      env,
+    );
+    const body = await res.json<StatsResponse>();
+    expect(body.topCities).toEqual([
+      // Unknown cities are one row, whatever their country (ties sort NULL first).
+      { value: null, country: null, count: 2 },
+      { value: "Paris", country: "FR", count: 2 },
+      { value: "Paris", country: "US", count: 1 },
+    ]);
   });
 
   it("shifts day attribution with the timezone", async () => {

@@ -21,6 +21,10 @@ export interface TopRow {
   count: number;
 }
 
+export interface CityTopRow extends TopRow {
+  country: string | null;
+}
+
 export interface StatsAggregates {
   totals: TotalsRow;
   /** Distinct visitor hashes summed per UTC day (hashes rotate daily). */
@@ -29,7 +33,7 @@ export interface StatsAggregates {
   dailyUniques: DailyUniqueRow[];
   tops: {
     country: TopRow[];
-    city: TopRow[];
+    city: CityTopRow[];
     device_type: TopRow[];
     os: TopRow[];
     browser: TopRow[];
@@ -38,10 +42,12 @@ export interface StatsAggregates {
   };
 }
 
-/** Columns exposed as "top …" lists. Interpolated into SQL — fixed allowlist only. */
+/**
+ * Columns exposed as "top …" lists. Interpolated into SQL — fixed allowlist only.
+ * Cities have their own query (ranked per country).
+ */
 const TOP_COLUMNS = [
   "country",
-  "city",
   "device_type",
   "os",
   "browser",
@@ -96,6 +102,14 @@ export async function fetchStatsAggregates(
       `SELECT date(scanned_at) AS utc_day, COUNT(DISTINCT visitor_hash) AS unique_visitors
        ${where} GROUP BY utc_day ORDER BY utc_day`,
     ),
+    // Same city name in different countries = different rows; unknown cities are
+    // grouped together whatever their country.
+    bindAll(
+      `SELECT city AS value, CASE WHEN city IS NULL THEN NULL ELSE country END AS city_country,
+              COUNT(*) AS count
+       ${where} GROUP BY city_country, value
+       ORDER BY count DESC, value ASC, city_country ASC LIMIT ${TOP_LIMIT}`,
+    ),
     ...TOP_COLUMNS.map((column) =>
       bindAll(
         `SELECT ${column} AS value, COUNT(*) AS count ${where}
@@ -105,12 +119,13 @@ export async function fetchStatsAggregates(
   ];
 
   const results = await db.batch(statements);
-  const [totalsRes, uniqueRes, hourlyRes, dailyRes, ...topRes] = results;
+  const [totalsRes, uniqueRes, hourlyRes, dailyRes, cityRes, ...topRes] = results;
   if (
     totalsRes === undefined ||
     uniqueRes === undefined ||
     hourlyRes === undefined ||
     dailyRes === undefined ||
+    cityRes === undefined ||
     topRes.length !== TOP_COLUMNS.length
   ) {
     throw new Error("Stats batch returned an unexpected number of results");
@@ -128,13 +143,16 @@ export async function fetchStatsAggregates(
     const res = topRes[i];
     topByColumn[column] = res === undefined ? [] : rowsOf<TopRow>(res);
   });
+  const city = rowsOf<{ value: string | null; city_country: string | null; count: number }>(
+    cityRes,
+  ).map((row) => ({ value: row.value, country: row.city_country, count: row.count }));
 
   return {
     totals,
     uniqueTotal,
     hourly: rowsOf<HourlyRow>(hourlyRes),
     dailyUniques: rowsOf<DailyUniqueRow>(dailyRes),
-    tops: topByColumn,
+    tops: { ...topByColumn, city },
   };
 }
 

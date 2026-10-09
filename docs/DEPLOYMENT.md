@@ -96,8 +96,9 @@ the deploy job (or the dashboard), set the variable, and re-run the _Deploy_ wor
 
 ## 9. Releases and rollback
 
-Every push to `main` is deployed to production once the checks pass, and the _Deploy_
-workflow ends with a smoke test against production (worker health, the 404 page for an
+Every push to `main` is deployed to production once the checks and the end-to-end tests
+pass (the _Deploy_ workflow runs both before touching production; _CI_ runs them on pull
+requests). The _Deploy_ workflow ends with a smoke test against production (worker health, the 404 page for an
 unknown code, and the web app wired to the worker). A release is a tagged, documented
 point in that history that you can return to.
 
@@ -105,7 +106,7 @@ point in that history that you can return to.
 
 1. Move the `[Unreleased]` entries of `CHANGELOG.md` under a new `[X.Y.Z] - date`
    heading and set `version` to `X.Y.Z` in the four `package.json` files.
-2. Commit as `chore(release): X.Y.Z`, push, and wait for _CI_ and _Deploy_ to be green.
+2. Commit as `chore(release): X.Y.Z`, push, and wait for _Deploy_ to be green.
 3. Tag that commit and publish the release notes:
 
    ```bash

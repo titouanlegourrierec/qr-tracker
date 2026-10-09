@@ -78,4 +78,5 @@ after 12 months. Details: the site's **Privacy** page.
 
 ## Having trouble?
 
-Open an issue: <https://github.com/titouanlegourrierec/qr-tracker/issues>
+Write to <titouanlegourrierec@kaist.ac.kr> or open an issue:
+<https://github.com/titouanlegourrierec/qr-tracker/issues>

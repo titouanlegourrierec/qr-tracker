@@ -27,7 +27,10 @@ export function makeStats(overrides: Partial<StatsResponse> = {}): StatsResponse
       { value: "FR", count: 39 },
       { value: null, count: 3 },
     ],
-    topCities: [{ value: "Paris", count: 20 }],
+    topCities: [
+      { value: "Paris", country: "FR", count: 20 },
+      { value: "Paris", country: "US", count: 2 },
+    ],
     topDevices: [{ value: "mobile", count: 35 }],
     topOs: [{ value: "iOS", count: 22 }],
     topBrowsers: [{ value: "Mobile Safari", count: 22 }],

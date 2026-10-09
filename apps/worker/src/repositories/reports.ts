@@ -27,7 +27,9 @@ export async function insertReport(
 export async function listReports(db: D1Database, limit: number): Promise<ReportListRow[]> {
   const result = await db
     .prepare(
-      `SELECT r.id, l.slug, l.target_url, l.status AS link_status, r.reason, r.details, r.created_at
+      `SELECT r.id, l.slug, l.target_url,
+              CASE WHEN l.blocked_at IS NULL THEN l.status ELSE 'blocked' END AS link_status,
+              r.reason, r.details, r.created_at
        FROM abuse_reports r JOIN links l ON l.id = r.link_id
        ORDER BY r.created_at DESC, r.id DESC
        LIMIT ?1`,
