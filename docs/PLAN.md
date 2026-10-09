@@ -86,7 +86,7 @@ CREATE TABLE scans (
   region          TEXT,
   city            TEXT,
   timezone        TEXT,                      -- visitor's IANA tz from request.cf
-  as_organization TEXT,
+  -- as_organization (ISP) was dropped in 1.3.0 (migration 0004): not shown, not collected.
   device_type     TEXT NOT NULL,             -- 'mobile' | 'tablet' | 'desktop' | 'other'
   os              TEXT,                      -- family only, e.g. "iOS" (no version)
   browser         TEXT,                      -- family only
@@ -141,7 +141,7 @@ Details:
 - **`POST /api/links`** body `{ targetUrl, label?, turnstileToken }` → `201 { slug, shortUrl, secretKey }`. `secretKey` is returned **once**: 32 bytes from `crypto.getRandomValues`, base64url (43 chars). Only its SHA-256 hex is stored. Verification server-side against `https://challenges.cloudflare.com/turnstile/v0/siteverify`.
 - **Auth**: key hashed then compared against `secret_hash` with `crypto.subtle.timingSafeEqual`. The key never appears in any URL, path, or query — header only.
 - **URL validation** (shared Zod + pure function): `http(s)` only, ≤ 2048 chars, no embedded credentials, hostname not `localhost`/`*.local`/private or loopback IP ranges (IPv4 + IPv6), not the worker's own hostname.
-- **Stats response** (computed in SQL, tz-mapped in service): totals (scans, unique visitors, first/last scan), time series per day + per hour (hour series only when range ≤ 14 days), hour-of-day and day-of-week distributions, top 10 of country/city/device/os/browser/language/ISP. `tz` defaults to `Europe/Paris`, validated against `Intl.supportedValuesOf('timeZone')`. `includeBots` defaults to `false`.
+- **Stats response** (computed in SQL, tz-mapped in service): totals (scans, unique visitors, first/last scan), time series per day + per hour (hour series only when range ≤ 14 days), hour-of-day and day-of-week distributions, top 10 of country/city/device/os/browser/language (ISP until 1.3.0). `tz` defaults to `Europe/Paris`, validated against `Intl.supportedValuesOf('timeZone')`. `includeBots` defaults to `false`.
 - **Timezone strategy**: SQL groups by UTC hour (`strftime`); the service maps each UTC-hour bucket to the requested tz via `Intl.DateTimeFormat` and re-aggregates into local days/hours. Known limitation (documented): counts are exact only for whole-hour-offset zones; 30/45-min-offset zones (e.g. Asia/Kolkata) are off by up to an hour at day boundaries.
 - **CSV export**: same columns as the `scans` table minus `id`/`link_id`; downloaded client-side via `fetch` + Blob so the key stays in the header.
 - **Redirect**: `302` + `Cache-Control: no-store` (never 301). Unknown slug → 404, disabled → 410, both as friendly HTML pages. Scan recording wrapped in `ctx.waitUntil()` with a top-level catch: tracking failure can never affect the redirect.

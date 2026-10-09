@@ -11,11 +11,12 @@ its own secret key. Built for a research lab, open to anyone.
 - Generate a QR code for any URL (PNG print-ready + SVG), protected by Cloudflare
   Turnstile.
 - Every scan is redirected in milliseconds (302, never cached) and recorded
-  **anonymously**: country/region/city, timezone, ISP, device/OS/browser families,
+  **anonymously**: country/region/city, timezone, device/OS/browser families,
   language, bot flag, and a daily-salted visitor hash. **No IPs, no full user-agents, no
   cookies, no persistent identifiers** (see the [privacy ADR](docs/adr/0003-privacy-visitor-hashing.md)).
 - A private dashboard per QR code (secret key in the URL _fragment_ only): totals, time
-  series, hour/day distributions, top locations & devices, bot toggle, CSV export.
+  series, hour/day distributions, top locations & devices, bot toggle, CSV export — and a
+  revocable read-only link to share it.
 - Manage without reprinting: change the destination, disable/enable, delete permanently.
 - Abuse handling: public report form, Google Safe Browsing check on destinations, and an
   operator kill switch (`scripts/admin.mjs`).
@@ -64,7 +65,8 @@ pnpm dev               # worker http://localhost:8787 + web http://localhost:517
 ```
 
 Local D1 migrations are applied automatically, and `apps/worker/.dev.vars` is created
-from the example with Cloudflare's Turnstile _test_ keys — creation works immediately.
+from the example with Cloudflare's Turnstile _test_ keys and the local origins allowed to
+call the API — creation works immediately.
 
 ## Scripts
 

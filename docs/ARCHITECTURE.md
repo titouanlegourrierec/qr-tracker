@@ -60,6 +60,13 @@ codes": up to 50 `{slug, secretKey}` pairs in the body (never in a URL), each ch
 against its own hash, answered with status, human scan count and last scan from one
 grouped query — one rate-limit hit for the whole list.
 
+**Read-only sharing** — the owner can create a second key (`POST /api/links/:slug/view-key`,
+returned once, stored as `links.view_hash`, revoked by `DELETE`). `authorizeLinkRead`
+accepts either key for the link, its stats, its export and the summaries and reports the
+`access` (`owner` / `viewer`); `authorizeLink` — updates, deletion, the key endpoints —
+accepts the secret key only. The SPA uses the same `#/stats/:slug/:key` route and hides
+the management panel for viewers.
+
 **Kill switch** — the API exposes three statuses: `active`, `disabled` (owner) and
 `blocked` (admin only). In D1 the owner's choice (`status`: active/disabled) and the
 operator's block (`blocked_at`) are separate columns: a block never overwrites the owner's
@@ -92,3 +99,11 @@ only, and every chart has a `<table>` alternative (WCAG 2.1 AA).
 - The D1 rate limiter is exact but global (one counter row per key+window); at the free
   tier's traffic levels this is not a bottleneck.
 - CSV export is capped at 50 000 rows per request.
+- GitHub Pages cannot send `frame-ancestors`/`X-Frame-Options`: against clickjacking, the
+  SPA refuses to render inside a frame (`lib/framing.ts`) and shows a link to open it
+  directly. A real header needs other hosting (e.g. Cloudflare Pages with `_headers`).
+- The private-host filter on destinations reads the URL only: a public name that resolves
+  to a private address (e.g. `127.0.0.1.nip.io`) passes. Harmless here — the worker never
+  fetches destinations, it only redirects browsers — but worth knowing.
+- `ALLOWED_ORIGINS` in `wrangler.jsonc` lists the production web app only; the local
+  origins come from `.dev.vars`, which is never deployed.

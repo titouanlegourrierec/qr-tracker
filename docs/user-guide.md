@@ -62,6 +62,17 @@ At the bottom of the statistics page you can:
   QR code will stop working). You are then taken back to **My QR codes**, which confirms
   the deletion.
 
+## Share the statistics
+
+To show the statistics to someone else (a colleague, a client) without letting them change
+or delete your QR code, open the statistics page and, under **Share the statistics
+(read-only)**, click **Create a read-only link**, then copy it. Whoever opens it sees the
+dashboard and can export the CSV, but has no management panel.
+
+**Replace the read-only link** gives a new one (the previous link stops working) and
+**Revoke** turns it off. Your browser keeps the read-only link with the QR code in **My QR
+codes** (and in its JSON export); in another browser, replace it to see a new one.
+
 ## Report a QR code
 
 If a QR code made with this service leads to a scam, malware or other harmful content,
