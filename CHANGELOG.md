@@ -6,6 +6,26 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **My QR codes** shows each code's number of scans, its last scan and whether it is
+  disabled or blocked, from one request for the whole list
+  (`POST /api/links/summaries`, keys in the body).
+- The **Statistics** page accepts the pasted private link: no need to type the 43-character
+  key.
+- A **Retry** button when statistics or scan counts fail to load, a confirmation after a QR
+  code is deleted, and a message when copying or creating the QR image fails.
+
+### Changed
+
+- The CSV export reads its date filters in the dashboard's time zone (new `tz` parameter,
+  default Europe/Paris like the stats), so a "7 days" export holds the scans the dashboard
+  counts. Scan times in the file stay in UTC.
+- "Unique visitors" is now "Visitors (unique per day)", with a note on why someone who
+  scans on several days counts several times.
+- The dashboard names the time zone it uses, and dates follow the browser's language
+  settings instead of a fixed British format.
+
 ## [1.2.0] - 2026-10-09
 
 ### Added
