@@ -1,6 +1,6 @@
 import { DEFAULT_TIMEZONE, secretKeySchema, slugSchema } from "@qr-tracker/shared";
 import type { Link, StatsResponse } from "@qr-tracker/shared";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { SubmitEvent } from "react";
 import { useParams } from "react-router";
 
@@ -89,8 +89,11 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
   // While refetching (filter change), the previous dashboard stays visible.
   const loading = data === null && error === null;
 
-  const load = useCallback(() => {
+  useEffect(() => {
     if (!validParams) return;
+    // Filters can change faster than the API answers: only the latest request may update
+    // the page, so a slow response for an older filter never overwrites a newer one.
+    let stale = false;
     Promise.all([
       api.getLink(slug, secretKey),
       api.getStats(slug, secretKey, {
@@ -101,17 +104,17 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
       }),
     ])
       .then(([link, stats]) => {
+        if (stale) return;
         setData({ link, stats });
         setError(null);
       })
       .catch((err: unknown) => {
-        setError(errorMessage(err));
+        if (!stale) setError(errorMessage(err));
       });
+    return () => {
+      stale = true;
+    };
   }, [validParams, slug, secretKey, tz, filters]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   if (!validParams) {
     return (
@@ -126,9 +129,10 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
 
   function applyRange(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    setQuick(null);
+    // An empty field removes that bound; both empty is the same as "All time".
+    setQuick(fromInput === "" && toInput === "" ? "all" : null);
     setFilters((current) => ({
-      ...current,
+      includeBots: current.includeBots,
       ...(fromInput === "" ? {} : { from: fromInput }),
       ...(toInput === "" ? {} : { to: toInput }),
     }));

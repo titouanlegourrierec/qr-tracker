@@ -1,7 +1,7 @@
 import type { Link } from "@qr-tracker/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
+import { delay, http, HttpResponse } from "msw";
 import { MemoryRouter, NavLink, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -107,6 +107,59 @@ describe("StatsPage", () => {
     await waitFor(() => {
       expect(seen.statsUrls.some((u) => u.includes("from=") && u.includes("to="))).toBe(true);
     });
+  });
+
+  it("removes a date bound when its field is emptied", async () => {
+    const seen = mockApi();
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("42");
+
+    await user.click(screen.getByRole("button", { name: "7 days" }));
+    await waitFor(() => {
+      expect(seen.statsUrls.at(-1)).toContain("from=");
+    });
+    await user.clear(screen.getByLabelText("From"));
+    await user.clear(screen.getByLabelText("To"));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      const last = seen.statsUrls.at(-1) ?? "";
+      expect(last).not.toContain("from=");
+      expect(last).not.toContain("to=");
+    });
+    expect(screen.getByRole("button", { name: "All time" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("ignores a slow response for filters that were changed since", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get(`${API}/api/links/${SLUG}`, () => HttpResponse.json(makeLink())),
+      http.get(`${API}/api/links/${SLUG}/stats`, async ({ request }) => {
+        const url = request.url;
+        if (url.includes("from=") && !url.includes("includeBots=true")) {
+          // "7 days" answers last, after the newer "7 days + bots" request.
+          await delay(300);
+          return HttpResponse.json(makeStats({ totals: { ...makeStats().totals, scans: 707 } }));
+        }
+        const scans = url.includes("includeBots=true") ? 999 : 42;
+        return HttpResponse.json(makeStats({ totals: { ...makeStats().totals, scans } }));
+      }),
+    );
+    renderPage();
+    await screen.findByText("42");
+
+    await user.click(screen.getByRole("button", { name: "7 days" }));
+    await user.click(screen.getByRole("checkbox", { name: /Include bots/ }));
+    expect(await screen.findByText("999")).toBeInTheDocument();
+
+    // Let the slow "7 days" response arrive: it must not replace the newer numbers.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(screen.getByText("999")).toBeInTheDocument();
+    expect(screen.queryByText("707")).not.toBeInTheDocument();
   });
 
   it("shows a friendly error for a wrong key", async () => {
