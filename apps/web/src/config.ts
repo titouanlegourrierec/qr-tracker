@@ -13,3 +13,6 @@ export const TURNSTILE_SITE_KEY = nonEmpty(
   import.meta.env.VITE_TURNSTILE_SITE_KEY,
   "1x00000000000000000000AA",
 );
+
+/** Public contact of the site's publisher (legal notice, personal-data requests, abuse). */
+export const CONTACT_EMAIL = "titouanlegourrierec@kaist.ac.kr";

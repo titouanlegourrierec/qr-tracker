@@ -11,6 +11,7 @@ export const en = {
       codes: "My QR codes",
       stats: "Statistics",
       privacy: "Privacy",
+      legal: "Legal notice",
       report: "Report abuse",
     },
     skipToContent: "Skip to content",
@@ -188,6 +189,9 @@ export const en = {
   },
   privacy: {
     title: "Privacy",
+  },
+  legal: {
+    title: "Legal notice",
   },
   notFound: {
     title: "Page not found",

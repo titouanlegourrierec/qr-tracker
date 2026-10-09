@@ -17,12 +17,32 @@ All notable changes to this project are documented here. The format follows
 - "I have saved my secret key somewhere safe" confirmation: until it is ticked, closing or
   reloading the page asks for confirmation.
 
+- **Legal notice** page (footer): publisher and contact, hosts, data controller, legal
+  basis and data-protection rights. The privacy page now gives the contact e-mail for
+  data requests instead of GitHub issues.
+
 ### Changed
 
+- Lifting an operator block restores the owner's own choice: a link its owner had paused
+  stays paused (blocks now live in their own `blocked_at` column, migration 0003).
+- Top cities are ranked per country and shown as "City, Country": Paris, France and
+  Paris, Texas no longer merge into one row.
+- Each daily salt is deleted a few minutes after its day ends (cron moved to 00:05 UTC);
+  it used to survive about 51 hours.
+- Production deploys now wait for the end-to-end tests too; the _CI_ workflow runs on pull
+  requests only.
 - The creation page now says so when the browser could not keep the QR code in
   "My QR codes" (private browsing, full storage), instead of claiming it was saved.
 - Copy buttons are named after what they copy, and keyboard focus moves to the result after
   creating a QR code.
+
+### Fixed
+
+- Emptying a date field and pressing Apply now removes that bound instead of keeping the
+  previous filter.
+- A slow statistics response for an older filter can no longer overwrite a newer one.
+- HEAD requests (link checkers) are no longer counted as scans.
+- An owner request racing an operator block can no longer undo it.
 
 ## [1.1.0] - 2026-10-05
 

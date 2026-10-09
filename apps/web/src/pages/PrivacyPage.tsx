@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import { CONTACT_EMAIL } from "../config.js";
 import { en } from "../i18n/en.js";
 
 /**
@@ -68,8 +69,8 @@ export function PrivacyPage() {
       <p>
         Whoever holds a QR code&apos;s secret key can permanently delete the link{" "}
         <em>and all of its statistics</em> at any time from the management panel. For any other
-        request, open an issue on{" "}
-        <a href="https://github.com/titouanlegourrierec/qr-tracker/issues">GitHub</a>.
+        request about your data, write to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>{" "}
+        (see the <Link to="/legal">legal notice</Link> for who is responsible and your rights).
       </p>
 
       <h2>What about this site?</h2>

@@ -231,6 +231,8 @@ main {
 }
 .site-footer a {
   color: inherit;
+  /* Wrap between links, never inside one ("Legal / notice"). */
+  white-space: nowrap;
 }
 
 h1 {
