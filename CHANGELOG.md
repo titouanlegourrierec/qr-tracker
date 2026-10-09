@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-09
+
 ### Added
 
 - **Report abuse** page: anyone can report a QR code from its short link, with no account
@@ -16,7 +18,6 @@ All notable changes to this project are documented here. The format follows
   destination, once a `SAFE_BROWSING_API_KEY` secret is set (docs/DEPLOYMENT.md §11).
 - "I have saved my secret key somewhere safe" confirmation: until it is ticked, closing or
   reloading the page asks for confirmation.
-
 - **Legal notice** page (footer): publisher and contact, hosts, data controller, legal
   basis and data-protection rights. The privacy page now gives the contact e-mail for
   data requests instead of GitHub issues.
@@ -31,6 +32,9 @@ All notable changes to this project are documented here. The format follows
   it used to survive about 51 hours.
 - Production deploys now wait for the end-to-end tests too; the _CI_ workflow runs on pull
   requests only.
+- Dependabot pull requests that bump a major version are labelled "major update" with a
+  warning comment, and TypeScript minor updates are held back (typescript-eslint supports
+  TS < 6.1 only).
 - The creation page now says so when the browser could not keep the QR code in
   "My QR codes" (private browsing, full storage), instead of claiming it was saved.
 - Copy buttons are named after what they copy, and keyboard focus moves to the result after
@@ -110,6 +114,7 @@ First public release.
 - CI (format, lint, typecheck, unit/integration tests with coverage, Playwright E2E)
   and a deploy pipeline (D1 migrations → worker → GitHub Pages → production smoke test).
 
-[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/titouanlegourrierec/qr-tracker/releases/tag/v1.0.0
