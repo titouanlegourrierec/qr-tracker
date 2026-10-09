@@ -36,6 +36,19 @@ Cloudflare's Turnstile _test_ keys — creation works offline-locally out of the
 - Privacy invariants (never store/log raw IPs, full user-agents, or any persistent
   identifier) are non-negotiable — see `docs/adr/0003-privacy-visitor-hashing.md`.
 
+## Dependency updates
+
+Dependabot opens one weekly PR with all minor and patch updates, and one PR per major
+update, labelled **major update** with a warning comment. A major update can contain
+breaking changes:
+
+- Merge only when every check is green. A red check means the code must be adapted first
+  (e.g. msw 3 renamed `onUnhandledRequest` to `onUnhandledFrame`).
+- Merge Dependabot PRs one at a time and let Dependabot rebase the next one: merging two
+  PRs that both touched `pnpm-lock.yaml` once left the lockfile inconsistent.
+- TypeScript (6.0.x), Vitest (4.1.x) and ua-parser-js (1.x) are pinned and ignored by
+  Dependabot; see CLAUDE.md before bumping them.
+
 ## Architecture
 
 Read `docs/ARCHITECTURE.md` first; the worker follows routes → services → repositories,
