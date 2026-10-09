@@ -100,7 +100,11 @@ export async function computeStats(
     hourOfDay,
     dayOfWeek,
     topCountries: toTopEntries(agg.tops.country),
-    topCities: toTopEntries(agg.tops.city),
+    topCities: agg.tops.city.map((row) => ({
+      value: row.value,
+      country: row.country,
+      count: row.count,
+    })),
     topDevices: toTopEntries(agg.tops.device_type),
     topOs: toTopEntries(agg.tops.os),
     topBrowsers: toTopEntries(agg.tops.browser),

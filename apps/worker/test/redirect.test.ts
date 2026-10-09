@@ -115,13 +115,24 @@ describe("GET /r/:slug", () => {
     expect(scan?.is_bot).toBe(1);
   });
 
-  it("answers HEAD requests with the redirect too (previewers often HEAD first)", async () => {
-    await insertTestLink("headlnk");
+  it("answers HEAD requests with the redirect but does not count them as scans", async () => {
+    const id = await insertTestLink("headlnk");
     const ctx = createExecutionContext();
-    const res = await app.request(`${BASE}/r/headlnk`, { method: "HEAD" }, env, ctx);
+    const res = await app.request(
+      `${BASE}/r/headlnk`,
+      { method: "HEAD", headers: { "User-Agent": HUMAN_UAS.macSafari ?? "" } },
+      env,
+      ctx,
+    );
     await waitOnExecutionContext(ctx);
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toBe("https://example.com/dest");
+
+    // Link checkers send HEAD, even with browser-like user agents.
+    const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM scans WHERE link_id = ?1")
+      .bind(id)
+      .first<{ n: number }>();
+    expect(count?.n).toBe(0);
   });
 
   it("serves a friendly 404 page for unknown slugs", async () => {

@@ -335,7 +335,17 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
                   entries={stats.topCountries}
                   format={countryName}
                 />
-                <TopList title={en.stats.tops.cities} entries={stats.topCities} />
+                <TopList
+                  title={en.stats.tops.cities}
+                  entries={stats.topCities.map(({ value, country, count }) => ({
+                    // "Paris, France" vs "Paris, United States": cities are ranked per country.
+                    value:
+                      value === null || country === null
+                        ? value
+                        : `${value}, ${countryName(country)}`,
+                    count,
+                  }))}
+                />
               </div>
 
               <h2 className="section-heading">{en.stats.sections.when}</h2>

@@ -78,6 +78,9 @@ describe("StatsPage", () => {
     expect(screen.getByText("Unknown")).toBeInTheDocument();
     expect(screen.getByText("Mobile")).toBeInTheDocument();
     expect(screen.getByText("France")).toBeInTheDocument();
+    // Homonym cities are told apart by their country.
+    expect(screen.getByRole("rowheader", { name: "Paris, France" })).toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: "Paris, United States" })).toBeInTheDocument();
     expect(screen.getByText("French")).toBeInTheDocument();
 
     // The map section renders (mocked canvas) with its hint.

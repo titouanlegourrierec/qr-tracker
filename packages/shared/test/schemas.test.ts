@@ -171,7 +171,7 @@ describe("response schemas", () => {
       hourOfDay: Array.from({ length: 24 }, () => 0),
       dayOfWeek: Array.from({ length: 7 }, () => 0),
       topCountries: [{ value: "FR", count: 10 }],
-      topCities: [{ value: null, count: 2 }],
+      topCities: [{ value: null, country: null, count: 2 }],
       topDevices: [],
       topOs: [],
       topBrowsers: [],

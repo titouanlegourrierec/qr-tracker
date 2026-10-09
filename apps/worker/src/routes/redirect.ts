@@ -48,8 +48,9 @@ export function redirectRoutes(): Hono<AppBindings> {
     }
 
     // Record the scan after responding; a tracking failure must never break the redirect.
-    // A cached answer means D1 is failing, so recording would only fail too.
-    if (!fromCache) {
+    // A cached answer means D1 is failing, so recording would only fail too. HEAD requests
+    // (Hono serves them with this GET handler) come from link checkers, not people scanning.
+    if (!fromCache && c.req.method !== "HEAD") {
       const context = scanContextFromRequest(c.req.raw);
       c.executionCtx.waitUntil(
         recordScan(c.env.DB, { id: link.id, slug: link.slug }, context).catch((error: unknown) => {
