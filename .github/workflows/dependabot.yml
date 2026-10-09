@@ -1,0 +1,42 @@
+name: Dependabot triage
+
+# Flags Dependabot PRs that bump a major version: those may contain breaking changes
+# (msw 3 renamed an option and broke CI on main). pull_request_target provides a token
+# that can label and comment; no code from the pull request is checked out or run.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  flag-major-updates:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Read the update metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v3.1.0
+      - name: Label and explain major updates
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          EVENT_ACTION: ${{ github.event.action }}
+          DEPENDENCIES: ${{ steps.meta.outputs.dependency-names }}
+        run: |
+          gh pr edit "$PR_URL" --add-label "major update"
+          # Comment once, not on every rebase.
+          if [ "$EVENT_ACTION" != "opened" ]; then exit 0; fi
+          gh pr comment "$PR_URL" --body-file - <<BODY
+          ⚠️ **Major version update** of \`$DEPENDENCIES\`: it may contain breaking changes.
+
+          - **Do not merge while a check is red.** A red check on a major update usually means
+            the code has to be adapted first; merging it breaks CI and blocks deploys on main.
+          - Read the release notes or migration guide linked in the description above.
+          - When CI is green, the update is compatible with our tests and safe to merge.
+          BODY

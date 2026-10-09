@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Minor and patch updates arrive together in one PR. Each major update gets its own PR,
+    # labelled "major update" by .github/workflows/dependabot.yml: those can break things.
     groups:
       npm-minor-and-patch:
         update-types:
@@ -16,9 +18,10 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@vitest/*"
         update-types: ["version-update:semver-major"]
-      # typescript-eslint supports TS < 6.1 only (TS 7 is the Go rewrite).
+      # typescript-eslint supports TS < 6.1 only (TS 7 is the Go rewrite), so even the
+      # 6.1 minor must wait for typescript-eslint.
       - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
       # ua-parser-js v2 is AGPL — prohibited (MIT v1 line only).
       - dependency-name: "ua-parser-js"
         update-types: ["version-update:semver-major"]
