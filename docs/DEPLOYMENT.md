@@ -127,6 +127,12 @@ point in that history that you can return to.
   another branch directly is refused: the `github-pages` environment only accepts `main`.
 - **Migrations are forward-only**: keep them additive (new tables, columns, indexes) so
   that an older worker keeps working against a newer schema.
+- **Exception — below 1.3.0**: migration 0004 drops `scans.as_organization` (the ISP is no
+  longer collected). A worker older than 1.3.0 reads and writes that column, so before
+  rolling the worker back that far, put an empty column back:
+  `npx wrangler d1 execute qr-tracker-db --remote --command "ALTER TABLE scans ADD COLUMN as_organization TEXT"`.
+  Roll the web app back too: an old worker fills `topIsps`, which the 1.3.0 web app
+  expects empty. (Adding `view_hash` in 0005 is additive and harmless.)
 
 ## 10. Protecting the redirect from floods
 

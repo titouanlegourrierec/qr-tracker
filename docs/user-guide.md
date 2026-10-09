@@ -71,7 +71,8 @@ dashboard and can export the CSV, but has no management panel.
 
 **Replace the read-only link** gives a new one (the previous link stops working) and
 **Revoke** turns it off. Your browser keeps the read-only link with the QR code in **My QR
-codes** (and in its JSON export); in another browser, replace it to see a new one.
+codes** (and in its JSON export); in another browser, replace it to see a new one. If the
+link shown no longer works (it was replaced from another browser), replace it again.
 
 ## Report a QR code
 
