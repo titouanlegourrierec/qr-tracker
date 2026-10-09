@@ -16,7 +16,7 @@ flowchart LR
     subgraph CF["Cloudflare (free tier)"]
         W["Worker (Hono)<br>routes → services → repositories"]
         D1[("D1 (SQLite)<br>links · scans · salts · rate_limits")]
-        CRON["Cron 03:10 UTC<br>salt rotation · retention purge"]
+        CRON["Cron 00:05 UTC<br>salt rotation · retention purge"]
         TS["Turnstile siteverify"]
     end
     SCAN -- "GET /r/:slug → 302 (no-store)" --> W

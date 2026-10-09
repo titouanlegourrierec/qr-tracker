@@ -24,8 +24,9 @@
     },
   ],
   "triggers": {
-    // Daily at 03:10 UTC: rotate salts, purge old scans, clean rate-limit windows.
-    "crons": ["10 3 * * *"],
+    // Daily at 00:05 UTC, right after the salt's day ends: delete it, purge old scans and
+    // reports, clean rate-limit windows.
+    "crons": ["5 0 * * *"],
   },
   "vars": {
     // localhost:5173 = vite dev, localhost:4173 = vite preview (Playwright E2E).

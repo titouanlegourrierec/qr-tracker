@@ -51,8 +51,8 @@ export function PrivacyPage() {
 
       <h2>Retention</h2>
       <p>
-        Scans are kept for <strong>12 months</strong>, then deleted automatically every night. Daily
-        salts are deleted after one day.
+        Scans are kept for <strong>12 months</strong>, then deleted automatically every night. Each
+        day&apos;s salt is deleted a few minutes after that day ends (UTC).
       </p>
 
       <h2>Reporting a QR code</h2>

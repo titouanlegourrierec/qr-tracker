@@ -47,10 +47,10 @@ describe("parseRetentionDays", () => {
 
 describe("runDailyMaintenance", () => {
   it("rotates salts, purges old scans and reports, and cleans rate-limit windows", async () => {
-    const now = new Date("2026-09-28T03:10:00Z");
+    const now = new Date("2026-09-28T00:05:00Z");
     const linkId = await insertLink("cronlnk");
 
-    // Salts: ancient (delete), yesterday (keep), plus today created by the run.
+    // Salts: ancient and yesterday's are both deleted; only today's (created by the run) stays.
     await env.DB.prepare("INSERT INTO salts (day, salt) VALUES ('2026-09-01', 'old-salt')").run();
     await env.DB.prepare("INSERT INTO salts (day, salt) VALUES ('2026-09-27', 'y-salt')").run();
 
@@ -80,13 +80,13 @@ describe("runDailyMaintenance", () => {
       .run();
 
     const report = await runDailyMaintenance(env, now);
-    expect(report.saltsDeleted).toBe(1);
+    expect(report.saltsDeleted).toBe(2);
     expect(report.scansPurged).toBe(1);
     expect(report.reportsPurged).toBe(1);
     expect(report.rateWindowsDeleted).toBe(1);
 
     const salts = await env.DB.prepare("SELECT day FROM salts ORDER BY day").all<{ day: string }>();
-    expect(salts.results.map((r) => r.day)).toEqual(["2026-09-27", "2026-09-28"]);
+    expect(salts.results.map((r) => r.day)).toEqual(["2026-09-28"]);
 
     const scans = await env.DB.prepare("SELECT visitor_hash FROM scans WHERE link_id = ?1")
       .bind(linkId)
@@ -100,7 +100,7 @@ describe("runDailyMaintenance", () => {
   it("runs via the scheduled handler", async () => {
     const controller = createScheduledController({
       scheduledTime: new Date(),
-      cron: "10 3 * * *",
+      cron: "5 0 * * *",
     });
     const ctx = createExecutionContext();
     worker.scheduled(controller, env, ctx);
