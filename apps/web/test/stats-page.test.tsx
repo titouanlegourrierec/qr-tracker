@@ -31,6 +31,8 @@ function makeLink(overrides: Partial<Link> = {}): Link {
     status: "active",
     createdAt: "2026-09-01T00:00:00.000Z",
     updatedAt: "2026-09-01T00:00:00.000Z",
+    access: "owner",
+    hasViewKey: false,
     ...overrides,
   };
 }
@@ -360,6 +362,57 @@ describe("StatsPage", () => {
     expect(await screen.findByRole("heading", { name: "My QR codes" })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("QR code deleted.");
     expect(loadCodes()).toHaveLength(0);
+  });
+
+  it("shows a read-only view to viewers, without the manage panel", async () => {
+    mockApi(makeLink({ access: "viewer", hasViewKey: true }));
+    renderPage();
+    await screen.findByText("42");
+    expect(screen.getByText("Read-only view")).toBeInTheDocument();
+    expect(screen.getByText(/shared its statistics with you/)).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Manage this QR code" })).not.toBeInTheDocument();
+    // Viewers can still export.
+    expect(screen.getByRole("button", { name: "Export scans (CSV)" })).toBeInTheDocument();
+  });
+
+  it("creates a read-only link, keeps it in My QR codes, and revokes it", async () => {
+    saveCode({ slug: SLUG, label: null, secretKey: KEY, createdAt: "2026-09-01T00:00:00.000Z" });
+    const viewKey = "v".repeat(43);
+    mockApi();
+    server.use(
+      http.post(`${API}/api/links/${SLUG}/view-key`, ({ request }) => {
+        expect(request.headers.get("Authorization")).toBe(`Bearer ${KEY}`);
+        return HttpResponse.json({ viewKey }, { status: 201 });
+      }),
+      http.delete(
+        `${API}/api/links/${SLUG}/view-key`,
+        () => new HttpResponse(null, { status: 204 }),
+      ),
+    );
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("42");
+
+    await user.click(screen.getByRole("button", { name: "Create a read-only link" }));
+    expect(await screen.findByText(/Read-only link created/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`#/stats/${SLUG}/${viewKey}$`))).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy read-only link" })).toBeInTheDocument();
+    expect(loadCodes()[0]?.viewKey).toBe(viewKey);
+
+    await user.click(screen.getByRole("button", { name: "Revoke" }));
+    expect(await screen.findByText(/Read-only link revoked/)).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(viewKey))).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create a read-only link" })).toBeInTheDocument();
+    expect(loadCodes()[0]?.viewKey).toBeUndefined();
+  });
+
+  it("says when a read-only link exists but this browser has no copy", async () => {
+    mockApi(makeLink({ hasViewKey: true }));
+    renderPage();
+    await screen.findByText("42");
+    expect(screen.getByText(/this browser has no copy of it/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Replace the read-only link" })).toBeInTheDocument();
   });
 
   it("shows the empty state when there are no scans", async () => {

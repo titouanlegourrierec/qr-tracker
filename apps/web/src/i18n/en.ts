@@ -24,6 +24,9 @@ export const en = {
     copy: "Copy",
     copied: "Copied!",
     copyFailed: "Copy failed",
+    framed:
+      "For your security, QR Tracker only works when opened directly, not inside another website.",
+    openDirectly: "Open QR Tracker",
     close: "Close",
   },
   errors: {
@@ -194,6 +197,9 @@ export const en = {
     },
     devices: { mobile: "Mobile", tablet: "Tablet", desktop: "Desktop", other: "Other" },
     days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    readOnlyBadge: "Read-only view",
+    readOnlyNote:
+      "The owner of this QR code shared its statistics with you: you can view and export them, but not change the QR code.",
     exportCsv: "Export scans (CSV)",
     empty: "No scans in this period.",
     manage: {
@@ -205,10 +211,27 @@ export const en = {
       enable: "Re-enable link",
       disabledBadge: "Disabled",
       blockedBadge: "Blocked by the administrator",
+      deleteTitle: "Delete this QR code",
       delete: "Delete permanently",
       deleteConfirm:
         "Permanently delete this QR code and all of its statistics? This cannot be undone, and the printed QR code will stop working.",
       deleted: "QR code deleted.",
+    },
+    share: {
+      title: "Share the statistics (read-only)",
+      intro:
+        "A read-only link shows these statistics to someone else — a colleague, a client — without letting them change, disable or delete the QR code.",
+      create: "Create a read-only link",
+      replace: "Replace the read-only link",
+      revoke: "Revoke",
+      copy: "Copy read-only link",
+      linkLabel: "Read-only link",
+      created: "Read-only link created. Copy it and send it to whoever needs the statistics.",
+      revoked: "Read-only link revoked: it no longer opens the statistics.",
+      notKept:
+        "A read-only link exists, but this browser has no copy of it. Replace it to get a new one (the current link will stop working).",
+      replaceConfirm: "Create a new read-only link? The current one will stop working.",
+      revokeConfirm: "Revoke the read-only link? Whoever has it will no longer see the statistics.",
     },
   },
   privacy: {

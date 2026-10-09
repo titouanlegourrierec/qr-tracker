@@ -20,6 +20,14 @@ export function isValidTimezone(tz: string): boolean {
   }
 }
 
+/**
+ * Canonical name of a valid timezone: case variants and aliases collapse to one spelling
+ * ("eUrOpE/pArIs" → "Europe/Paris", "GMT" → "UTC").
+ */
+export function canonicalTimezone(tz: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: tz }).resolvedOptions().timeZone;
+}
+
 // Keep in sync with SLUG_LENGTH / SECRET_KEY_LENGTH (asserted in tests).
 export const slugSchema = z.string().regex(/^[0-9A-Za-z]{7}$/);
 export const secretKeySchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
@@ -53,6 +61,13 @@ export const createLinkResponseSchema = z.object({
 });
 export type CreateLinkResponse = z.infer<typeof createLinkResponseSchema>;
 
+/**
+ * owner: the secret key — full control · viewer: a read-only key the owner shared, which
+ * opens the statistics and the export but cannot change or delete the link.
+ */
+export const linkAccessSchema = z.enum(["owner", "viewer"]);
+export type LinkAccess = z.infer<typeof linkAccessSchema>;
+
 export const linkSchema = z.object({
   slug: slugSchema,
   targetUrl: z.string(),
@@ -60,8 +75,16 @@ export const linkSchema = z.object({
   status: linkStatusSchema,
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
+  /** What the key used for this request may do. */
+  access: linkAccessSchema,
+  /** Whether a read-only key currently exists. */
+  hasViewKey: z.boolean(),
 });
 export type Link = z.infer<typeof linkSchema>;
+
+/** A new read-only key, returned once (only its hash is stored). */
+export const viewKeyResponseSchema = z.object({ viewKey: secretKeySchema });
+export type ViewKeyResponse = z.infer<typeof viewKeyResponseSchema>;
 
 export const updateLinkRequestSchema = z
   .object({
@@ -99,10 +122,14 @@ const queryDateSchema = z.iso
     message: `Date must be between ${QUERY_DATE_MIN} and ${QUERY_DATE_MAX}`,
   });
 
-/** IANA timezone the `from`/`to` dates are read in (the dashboard sends the browser's). */
+/**
+ * IANA timezone the `from`/`to` dates are read in (the dashboard sends the browser's),
+ * canonicalized so spelling variants share one cached formatter in the worker.
+ */
 const timezoneQuerySchema = z
   .string()
   .refine(isValidTimezone, { message: "Unknown timezone" })
+  .transform(canonicalTimezone)
   .default(DEFAULT_TIMEZONE);
 
 export const statsQuerySchema = z
@@ -185,7 +212,11 @@ export const statsResponseSchema = z.object({
   topOs: z.array(topEntrySchema),
   topBrowsers: z.array(topEntrySchema),
   topLanguages: z.array(topEntrySchema),
-  topIsps: z.array(topEntrySchema),
+  /**
+   * Deprecated, always empty: network operators are no longer collected (1.3.0). Kept so
+   * web app versions cached before that release still accept the response; remove later.
+   */
+  topIsps: z.array(topEntrySchema).max(0),
 });
 export type StatsResponse = z.infer<typeof statsResponseSchema>;
 

@@ -35,7 +35,7 @@ export function makeStats(overrides: Partial<StatsResponse> = {}): StatsResponse
     topOs: [{ value: "iOS", count: 22 }],
     topBrowsers: [{ value: "Mobile Safari", count: 22 }],
     topLanguages: [{ value: "fr", count: 38 }],
-    topIsps: [{ value: "Orange", count: 25 }],
+    topIsps: [],
     ...overrides,
   };
 }

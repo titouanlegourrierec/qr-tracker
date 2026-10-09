@@ -109,6 +109,7 @@ export async function computeStats(
     topOs: toTopEntries(agg.tops.os),
     topBrowsers: toTopEntries(agg.tops.browser),
     topLanguages: toTopEntries(agg.tops.language),
-    topIsps: toTopEntries(agg.tops.as_organization),
+    // ISPs are no longer collected; kept empty for web app versions cached before 1.3.0.
+    topIsps: [],
   };
 }

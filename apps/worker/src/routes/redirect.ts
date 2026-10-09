@@ -11,7 +11,10 @@ function cfString(value: unknown): string | null {
   return typeof value === "string" && value !== "" ? value : null;
 }
 
-/** Extracts the scan context from the incoming request (values only, no storage). */
+/**
+ * Extracts the scan context from the incoming request (values only, no storage). Only what
+ * the dashboard shows is read: the network operator (cf.asOrganization) is left out.
+ */
 export function scanContextFromRequest(req: Request): ScanContext {
   // request.cf is only guaranteed on real inbound requests; read it defensively.
   const cf: Record<string, unknown> = req.cf ?? {};
@@ -23,7 +26,6 @@ export function scanContextFromRequest(req: Request): ScanContext {
     region: cfString(cf.region),
     city: cfString(cf.city),
     timezone: cfString(cf.timezone),
-    asOrganization: cfString(cf.asOrganization),
   };
 }
 

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../src/app.js";
 import { sha256Hex } from "../src/lib/crypto.js";
+import { scanContextFromRequest } from "../src/routes/redirect.js";
 
 import { HUMAN_UAS, PREVIEWER_UAS } from "./fixtures/user-agents.js";
 
@@ -20,7 +21,6 @@ interface ScanRow {
   language: string | null;
   is_bot: number;
   visitor_hash: string;
-  as_organization: string | null;
 }
 
 async function insertTestLink(
@@ -83,6 +83,20 @@ describe("GET /r/:slug", () => {
     const serialized = JSON.stringify(rows.results);
     expect(serialized).not.toContain("198.51.100.77");
     expect(serialized).not.toContain(ua);
+  });
+
+  it("never reads or stores the visitor's network operator", async () => {
+    const request = new Request(`${BASE}/r/isp0001`, {
+      cf: { country: "FR", city: "Lyon", asOrganization: "Orange S.A." },
+    });
+    const context = scanContextFromRequest(request);
+    expect(context.country).toBe("FR");
+    expect(JSON.stringify(context)).not.toContain("Orange");
+
+    const columns = await env.DB.prepare("SELECT name FROM pragma_table_info('scans')").all<{
+      name: string;
+    }>();
+    expect(columns.results.map((c) => c.name)).not.toContain("as_organization");
   });
 
   it("uses a stable visitor hash for the same visitor on the same day", async () => {

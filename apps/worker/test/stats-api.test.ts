@@ -22,22 +22,20 @@ interface ScanSeed {
   os?: string;
   browser?: string;
   language?: string;
-  isp?: string;
   bot?: boolean;
 }
 
 async function seedScan(seed: ScanSeed): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO scans (link_id, scanned_at, country, region, city, timezone, as_organization,
+    `INSERT INTO scans (link_id, scanned_at, country, region, city, timezone,
                         device_type, os, browser, language, is_bot, visitor_hash)
-     VALUES (?1, ?2, ?3, NULL, ?4, NULL, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`,
+     VALUES (?1, ?2, ?3, NULL, ?4, NULL, ?5, ?6, ?7, ?8, ?9, ?10)`,
   )
     .bind(
       linkId,
       seed.at,
       seed.country ?? "FR",
       seed.city ?? "Paris",
-      seed.isp ?? "Orange",
       seed.device ?? "mobile",
       seed.os ?? "iOS",
       seed.browser ?? "Mobile Safari",
@@ -80,7 +78,6 @@ beforeAll(async () => {
     os: "Windows",
     browser: "Chrome",
     language: "de",
-    isp: "Telekom",
   }); // Paris: Tue 00h (the 8th)
   await seedScan({ at: "2026-09-08T10:00:00.000Z", hash: "v3" }); // Paris: Tue 12h
   await seedScan({ at: "2026-09-08T11:00:00.000Z", hash: "bot1", bot: true });
@@ -122,7 +119,8 @@ describe("GET /api/links/:slug/stats", () => {
     expect(body.topCountries[1]).toEqual({ value: "DE", count: 1 });
     expect(body.topDevices[0]?.value).toBe("mobile");
     expect(body.topLanguages[0]?.value).toBe("fr");
-    expect(body.topIsps[0]?.value).toBe("Orange");
+    // Network operators are no longer collected; the field stays for older web apps.
+    expect(body.topIsps).toEqual([]);
   });
 
   it("ranks cities per country so homonyms stay apart", async () => {
@@ -235,7 +233,7 @@ describe("GET /api/links/:slug/export", () => {
 
     const lines = (await res.text()).trim().split("\r\n");
     expect(lines[0]).toBe(
-      "scanned_at,country,region,city,timezone,as_organization,device_type,os,browser,language,is_bot,visitor_hash",
+      "scanned_at,country,region,city,timezone,device_type,os,browser,language,is_bot,visitor_hash",
     );
     expect(lines).toHaveLength(1 + 4);
     expect(lines[1]).toContain("2026-09-07T08:15:00.000Z");

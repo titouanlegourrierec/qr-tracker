@@ -7,7 +7,6 @@ export interface ScanFields {
   region: string | null;
   city: string | null;
   timezone: string | null;
-  asOrganization: string | null;
   deviceType: DeviceType;
   os: string | null;
   browser: string | null;
@@ -26,8 +25,8 @@ export async function insertScan(db: D1Database, scan: ScanFields): Promise<void
   await db
     .prepare(
       `INSERT INTO scans (link_id, scanned_at, country, region, city, timezone,
-                          as_organization, device_type, os, browser, language, is_bot, visitor_hash)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)`,
+                          device_type, os, browser, language, is_bot, visitor_hash)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`,
     )
     .bind(
       scan.linkId,
@@ -36,7 +35,6 @@ export async function insertScan(db: D1Database, scan: ScanFields): Promise<void
       scan.region,
       scan.city,
       scan.timezone,
-      scan.asOrganization,
       scan.deviceType,
       scan.os,
       scan.browser,

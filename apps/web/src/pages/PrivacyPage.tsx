@@ -20,7 +20,6 @@ export function PrivacyPage() {
       <ul>
         <li>the date and time of the scan (UTC);</li>
         <li>the approximate country, region, city and timezone (derived from the network);</li>
-        <li>the network operator or internet service provider (network organization);</li>
         <li>
           the device type (mobile, tablet, desktop) and the operating-system and browser families —
           never exact versions;
@@ -40,6 +39,7 @@ export function PrivacyPage() {
           few milliseconds, to compute the day&apos;s fingerprint.
         </li>
         <li>No full browser string (user-agent) is kept.</li>
+        <li>No network operator or internet service provider.</li>
         <li>
           No cookies, no trackers, no third-party analytics — neither on this site nor during scans.
         </li>
@@ -68,9 +68,11 @@ export function PrivacyPage() {
       <h2>Deleting data</h2>
       <p>
         Whoever holds a QR code&apos;s secret key can permanently delete the link{" "}
-        <em>and all of its statistics</em> at any time from the management panel. For any other
-        request about your data, write to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>{" "}
-        (see the <Link to="/legal">legal notice</Link> for who is responsible and your rights).
+        <em>and all of its statistics</em> at any time from the management panel. They can also
+        share a read-only link, which shows the same anonymous statistics and can be revoked at any
+        time. For any other request about your data, write to{" "}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> (see the{" "}
+        <Link to="/legal">legal notice</Link> for who is responsible and your rights).
       </p>
 
       <h2>What about this site?</h2>

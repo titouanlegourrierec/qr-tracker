@@ -141,6 +141,33 @@ test("manual stats entry: a wrong key is refused, the pasted private link opens"
   await expect(page.getByRole("heading", { name: /Statistics — Test key/ })).toBeVisible();
 });
 
+test("a read-only link shows the statistics but cannot manage the QR code", async ({
+  page,
+  request,
+}) => {
+  const { shortUrl, statsUrl } = await createQr(page, "https://example.com/shared", "Shared");
+  const slug = shortUrl.split("/r/")[1] ?? "";
+
+  await page.goto(statsUrl);
+  await page.getByRole("button", { name: "Create a read-only link" }).click();
+  await expect(page.getByText(/Read-only link created/)).toBeVisible({ timeout: 15_000 });
+  const viewUrl = await page.locator("code", { hasText: `#/stats/${slug}/` }).innerText();
+  expect(viewUrl).not.toBe(statsUrl);
+
+  await page.goto(viewUrl);
+  await expect(page.getByRole("heading", { name: /Statistics — Shared/ })).toBeVisible();
+  await expect(page.getByText("Read-only view")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Manage this QR code" })).toHaveCount(0);
+
+  // The worker refuses the read-only key for anything but reading.
+  const viewKey = viewUrl.split("/").at(-1) ?? "";
+  const patch = await request.patch(`${WORKER}/api/links/${slug}`, {
+    headers: { Authorization: `Bearer ${viewKey}` },
+    data: { status: "disabled" },
+  });
+  expect(patch.status()).toBe(401);
+});
+
 test("anyone can report a QR code from its short link", async ({ page }) => {
   const { shortUrl } = await createQr(page, "https://example.com/suspicious", "Reported");
 

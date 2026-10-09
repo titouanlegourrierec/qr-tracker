@@ -119,6 +119,12 @@ describe("statsQuerySchema", () => {
     expect(statsQuerySchema.safeParse({ tz: "Europe/Paris" }).success).toBe(true);
     expect(statsQuerySchema.safeParse({ tz: "Mars/Olympus" }).success).toBe(false);
   });
+
+  it("canonicalizes timezone spellings", () => {
+    expect(statsQuerySchema.parse({ tz: "eUrOpE/pArIs" }).tz).toBe("Europe/Paris");
+    expect(statsQuerySchema.parse({ tz: "GMT" }).tz).toBe("UTC");
+    expect(exportQuerySchema.parse({ tz: "europe/paris" }).tz).toBe("Europe/Paris");
+  });
 });
 
 describe("exportQuerySchema", () => {
@@ -182,6 +188,8 @@ describe("response schemas", () => {
       status: "active",
       createdAt: "2026-09-28T10:00:00.000Z",
       updatedAt: "2026-09-28T10:00:00.000Z",
+      access: "viewer",
+      hasViewKey: true,
     });
     expect(result.success).toBe(true);
   });
@@ -219,6 +227,10 @@ describe("response schemas", () => {
     expect(statsResponseSchema.safeParse(base).success).toBe(true);
     expect(statsResponseSchema.safeParse({ ...base, hourOfDay: [0, 1, 2] }).success).toBe(false);
     expect(statsResponseSchema.safeParse({ ...base, byHour: null }).success).toBe(true);
+    // ISPs are no longer collected: the deprecated list must stay empty.
+    expect(
+      statsResponseSchema.safeParse({ ...base, topIsps: [{ value: "Orange", count: 1 }] }).success,
+    ).toBe(false);
   });
 });
 
