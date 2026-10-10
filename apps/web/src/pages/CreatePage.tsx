@@ -27,6 +27,7 @@ interface Created {
 function CreationResult({ created: { response: created, savedLocally } }: { created: Created }) {
   const [svg, setSvg] = useState<string | null>(null);
   const [keySaved, setKeySaved] = useState(false);
+  const [downloadFailed, setDownloadFailed] = useState(false);
   const successRef = useRef<HTMLParagraphElement>(null);
   const statsUrl = buildStatsUrl(created.slug, created.secretKey);
 
@@ -86,9 +87,15 @@ function CreationResult({ created: { response: created, savedLocally } }: { crea
               <button
                 type="button"
                 onClick={() => {
-                  void qrPngDataUrl(created.shortUrl).then((url) => {
-                    downloadUrl(url, `qr-${created.slug}.png`);
-                  });
+                  setDownloadFailed(false);
+                  qrPngDataUrl(created.shortUrl).then(
+                    (url) => {
+                      downloadUrl(url, `qr-${created.slug}.png`);
+                    },
+                    () => {
+                      setDownloadFailed(true);
+                    },
+                  );
                 }}
               >
                 {en.create.downloadPng}
@@ -96,17 +103,28 @@ function CreationResult({ created: { response: created, savedLocally } }: { crea
               <button
                 type="button"
                 onClick={() => {
-                  void qrSvg(created.shortUrl).then((markup) => {
-                    downloadBlob(
-                      new Blob([markup], { type: "image/svg+xml" }),
-                      `qr-${created.slug}.svg`,
-                    );
-                  });
+                  setDownloadFailed(false);
+                  qrSvg(created.shortUrl).then(
+                    (markup) => {
+                      downloadBlob(
+                        new Blob([markup], { type: "image/svg+xml" }),
+                        `qr-${created.slug}.svg`,
+                      );
+                    },
+                    () => {
+                      setDownloadFailed(true);
+                    },
+                  );
                 }}
               >
                 {en.create.downloadSvg}
               </button>
             </div>
+            {downloadFailed && (
+              <p className="error-box" role="alert">
+                {en.create.downloadFailed}
+              </p>
+            )}
           </div>
         </div>
       </div>

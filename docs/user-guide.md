@@ -25,7 +25,8 @@ You get:
   never sent to the server.
 
 The QR code is also added to **My QR codes** — but only in the browser where you created
-it (the page tells you if your browser refused, e.g. in private browsing). Use
+it (the page tells you if your browser refused, e.g. in private browsing). The list shows
+each QR code's number of scans, its last scan and whether it is disabled. Use
 **Export (JSON)** to make a backup or move it to another computer.
 
 ## View the statistics
@@ -34,14 +35,20 @@ Three ways:
 
 - open your bookmarked **private link**;
 - open **My QR codes** and click _Statistics_;
-- or **Statistics** → enter the code (7 characters) and the secret key.
+- or **Statistics** → paste the private link, or enter the code (7 characters) and the
+  secret key.
 
-The dashboard shows: the number of scans, unique visitors (a per-day estimate), scans per
-day and per hour, the hour-of-day and day-of-week distributions, a world map of scan
+The dashboard shows: the number of scans, visitors (each counted once per day: to protect
+privacy, nobody is recognized from one day to the next, so someone who scans on three
+different days counts three times), scans per day and per hour, the hour-of-day and day-of-week distributions, a world map of scan
 locations (zoom and drag to explore it), and the top countries, cities, devices, operating
 systems, browsers and languages. Bots (WhatsApp or Slack link previews, search-engine
 crawlers…) are excluded by default — a checkbox lets you include them. The **Export scans
 (CSV)** button downloads the anonymized per-scan data for Excel/R/Python.
+
+Dates and times use your browser's time zone (shown under the filters), in your
+browser's date format. The CSV export covers the same days as the dashboard, but lists each
+scan's time in UTC (`scanned_at`, ending in `Z`).
 
 ## Edit or delete
 
@@ -52,7 +59,8 @@ At the bottom of the statistics page you can:
 - temporarily **disable** the link (scans show a "link disabled" page), then re-enable
   it;
 - **permanently delete** the link and all of its statistics (irreversible — the printed
-  QR code will stop working).
+  QR code will stop working). You are then taken back to **My QR codes**, which confirms
+  the deletion.
 
 ## Report a QR code
 

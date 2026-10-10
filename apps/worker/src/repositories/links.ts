@@ -56,6 +56,17 @@ export async function findLinkBySlug(db: D1Database, slug: string): Promise<Link
   return db.prepare("SELECT * FROM links WHERE slug = ?1").bind(slug).first<LinkRow>();
 }
 
+/** Links matching any of the slugs (at most SUMMARY_MAX_LINKS: D1 binds up to 100 values). */
+export async function findLinksBySlugs(db: D1Database, slugs: string[]): Promise<LinkRow[]> {
+  if (slugs.length === 0) return [];
+  const placeholders = slugs.map((_, i) => `?${i + 1}`).join(", ");
+  const result = await db
+    .prepare(`SELECT * FROM links WHERE slug IN (${placeholders})`)
+    .bind(...slugs)
+    .all<LinkRow>();
+  return result.results;
+}
+
 /**
  * Owner update. Returns false when the link is blocked: the check is part of the UPDATE,
  * so an owner request racing an operator block cannot undo it.

@@ -4,7 +4,7 @@ import { en } from "../i18n/en.js";
 
 /** Copies a value to the clipboard with an accessible confirmation. */
 export function CopyButton({ value, label }: { value: string; label?: string }) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -14,20 +14,37 @@ export function CopyButton({ value, label }: { value: string; label?: string }) 
     [],
   );
 
+  function show(next: "copied" | "failed") {
+    setState(next);
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setState("idle");
+    }, 2000);
+  }
+
+  const text =
+    state === "copied"
+      ? en.app.copied
+      : state === "failed"
+        ? en.app.copyFailed
+        : (label ?? en.app.copy);
+
   return (
     <button
       type="button"
       onClick={() => {
-        void navigator.clipboard.writeText(value).then(() => {
-          setCopied(true);
-          if (timerRef.current !== null) clearTimeout(timerRef.current);
-          timerRef.current = setTimeout(() => {
-            setCopied(false);
-          }, 2000);
-        });
+        // Refused without permission or outside a secure context: say so instead of nothing.
+        navigator.clipboard.writeText(value).then(
+          () => {
+            show("copied");
+          },
+          () => {
+            show("failed");
+          },
+        );
       }}
     >
-      <span aria-live="polite">{copied ? en.app.copied : (label ?? en.app.copy)}</span>
+      <span aria-live="polite">{text}</span>
     </button>
   );
 }

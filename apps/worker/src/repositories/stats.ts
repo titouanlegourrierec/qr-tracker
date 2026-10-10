@@ -156,6 +156,31 @@ export async function fetchStatsAggregates(
   };
 }
 
+export interface ScanSummaryRow {
+  scans: number;
+  last_scan: string | null;
+}
+
+/**
+ * Human scan count and latest scan per link, for "My QR codes" (one grouped query over
+ * idx_scans_link_time). Links without scans are absent from the map.
+ */
+export async function fetchScanSummaries(
+  db: D1Database,
+  linkIds: number[],
+): Promise<Map<number, ScanSummaryRow>> {
+  if (linkIds.length === 0) return new Map();
+  const placeholders = linkIds.map((_, i) => `?${i + 1}`).join(", ");
+  const result = await db
+    .prepare(
+      `SELECT link_id, COUNT(*) AS scans, MAX(scanned_at) AS last_scan FROM scans
+       WHERE link_id IN (${placeholders}) AND is_bot = 0 GROUP BY link_id`,
+    )
+    .bind(...linkIds)
+    .all<ScanSummaryRow & { link_id: number }>();
+  return new Map(result.results.map(({ link_id, ...row }) => [link_id, row]));
+}
+
 export interface ExportRow extends Record<string, unknown> {
   scanned_at: string;
   country: string | null;

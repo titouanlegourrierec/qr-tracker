@@ -243,12 +243,30 @@ describe("GET /api/links/:slug/export", () => {
 
   it("includes bots and honors date filters", async () => {
     const res = await app.request(
-      `${BASE}/api/links/statlnk/export?includeBots=true&from=2026-09-08&to=2026-09-08`,
+      `${BASE}/api/links/statlnk/export?includeBots=true&from=2026-09-08&to=2026-09-08&tz=UTC`,
       { headers: { Authorization: `Bearer ${KEY}`, "CF-Connecting-IP": crypto.randomUUID() } },
       env,
     );
     const lines = (await res.text()).trim().split("\r\n");
     expect(lines).toHaveLength(1 + 2);
+  });
+
+  it("reads the date filters in the requested timezone, like the dashboard", async () => {
+    async function exportedRows(params: string): Promise<string[]> {
+      const res = await app.request(
+        `${BASE}/api/links/statlnk/export${params}`,
+        { headers: { Authorization: `Bearer ${KEY}`, "CF-Connecting-IP": crypto.randomUUID() } },
+        env,
+      );
+      return (await res.text()).trim().split("\r\n").slice(1);
+    }
+    // 22:30Z on the 7th is already the 8th in Paris, as on the dashboard.
+    const paris = await exportedRows("?from=2026-09-08&to=2026-09-08&tz=Europe/Paris");
+    expect(paris).toHaveLength(2);
+    expect(paris[0]).toContain("2026-09-07T22:30:00.000Z");
+    const utc = await exportedRows("?from=2026-09-08&to=2026-09-08&tz=UTC");
+    expect(utc).toHaveLength(1);
+    expect(utc[0]).toContain("2026-09-08T10:00:00.000Z");
   });
 
   it("requires authentication", async () => {

@@ -68,7 +68,8 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
     run(async () => {
       await api.deleteLink(link.slug, secretKey);
       removeCode(link.slug);
-      await navigate("/codes");
+      // "My QR codes" confirms the deletion.
+      await navigate("/codes", { state: { deleted: true } });
     });
   }
 

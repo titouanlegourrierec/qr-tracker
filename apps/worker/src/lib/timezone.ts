@@ -115,6 +115,11 @@ export function localDayStartUtcMs(date: string, tz: string): number {
   return guess - tzOffsetMs(first, tz);
 }
 
+/** ISO form of localDayStartUtcMs, for comparisons with scanned_at. */
+export function localDayStartIso(date: string, tz: string): string {
+  return new Date(localDayStartUtcMs(date, tz)).toISOString();
+}
+
 /** Adds days to a YYYY-MM-DD date (pure calendar arithmetic). */
 export function addDays(date: string, days: number): string {
   const ms = Date.parse(`${date}T00:00:00Z`) + days * 86_400_000;

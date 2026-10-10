@@ -6,6 +6,7 @@ import { MemoryRouter, NavLink, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { loadCodes, saveCode } from "../src/lib/storage.js";
+import { CodesPage } from "../src/pages/CodesPage.js";
 import { StatsPage } from "../src/pages/StatsPage.js";
 
 import { KEY, makeStats, server, SLUG } from "./msw.js";
@@ -51,7 +52,7 @@ function renderPage(slug = SLUG, key = KEY) {
     <MemoryRouter initialEntries={[`/stats/${slug}/${key}`]}>
       <Routes>
         <Route path="/stats/:slug/:key" element={<StatsPage />} />
-        <Route path="/codes" element={<p>codes-page</p>} />
+        <Route path="/codes" element={<CodesPage />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -184,6 +185,56 @@ describe("StatsPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid secret key");
   });
 
+  it("loads again with Retry after a failure", async () => {
+    mockApi();
+    server.use(
+      http.get(`${API}/api/links/${SLUG}/stats`, () => HttpResponse.error(), { once: true }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not reach the server");
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("42")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("explains how visitors are counted and which time zone is used", async () => {
+    mockApi();
+    renderPage();
+    await screen.findByText("42");
+    expect(screen.getByText("Visitors (unique per day)")).toBeInTheDocument();
+    expect(screen.getByText(/counts as three visitors/)).toBeInTheDocument();
+    expect(screen.getByText(/browser's time zone \(Europe\/Paris\)/)).toBeInTheDocument();
+  });
+
+  it("exports the CSV for the dashboard's days, and reports export errors apart", async () => {
+    mockApi();
+    const exportUrls: string[] = [];
+    server.use(
+      http.get(`${API}/api/links/${SLUG}/export`, ({ request }) => {
+        exportUrls.push(request.url);
+        return HttpResponse.json(
+          { error: { code: "RATE_LIMITED", message: "Too many requests" } },
+          { status: 429 },
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("42");
+
+    await user.click(screen.getByRole("button", { name: "7 days" }));
+    await user.click(screen.getByRole("button", { name: "Export scans (CSV)" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many requests");
+    const url = new URL(exportUrls[0] ?? "");
+    expect(url.searchParams.get("tz")).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    expect(url.searchParams.get("from")).not.toBeNull();
+    // The dashboard itself stays usable: an export failure offers no "Retry" of the stats.
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(screen.getByText("42")).toBeInTheDocument();
+  });
+
   it("rejects malformed route params without calling the API", () => {
     renderPage("bad", "short");
     expect(screen.getByRole("alert")).toHaveTextContent("Badly formatted");
@@ -306,7 +357,8 @@ describe("StatsPage", () => {
     await screen.findByText("42");
 
     await user.click(screen.getByRole("button", { name: "Delete permanently" }));
-    expect(await screen.findByText("codes-page")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "My QR codes" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("QR code deleted.");
     expect(loadCodes()).toHaveLength(0);
   });
 

@@ -24,6 +24,9 @@ export const HOUR_SERIES_MAX_DAYS = 14;
 /** Number of entries in each "top …" stats list. */
 export const TOP_LIMIT = 10;
 
+/** Codes per "My QR codes" summary request (the web app splits longer lists). */
+export const SUMMARY_MAX_LINKS = 50;
+
 /** Hard cap on CSV export rows (worker memory protection). */
 export const EXPORT_MAX_ROWS = 50_000;
 

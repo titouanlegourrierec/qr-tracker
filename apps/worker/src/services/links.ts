@@ -1,5 +1,11 @@
 import { validateTargetUrl } from "@qr-tracker/shared";
-import type { CreateLinkRequest, CreateLinkResponse, UpdateLinkRequest } from "@qr-tracker/shared";
+import type {
+  CreateLinkRequest,
+  CreateLinkResponse,
+  LinkSummariesRequest,
+  LinkSummary,
+  UpdateLinkRequest,
+} from "@qr-tracker/shared";
 
 import { ApiError } from "../lib/api-error.js";
 import { generateSecretKey, generateSlug, sha256Hex, timingSafeEqualHex } from "../lib/crypto.js";
@@ -10,6 +16,7 @@ import type { ReputationEnv } from "../lib/url-reputation.js";
 import {
   deleteLinkWithScans,
   findLinkBySlug,
+  findLinksBySlugs,
   insertLink,
   isUniqueConstraintError,
   effectiveStatus,
@@ -17,6 +24,7 @@ import {
   updateLinkAsOwner,
 } from "../repositories/links.js";
 import type { LinkRow } from "../repositories/links.js";
+import { fetchScanSummaries } from "../repositories/stats.js";
 
 const MAX_SLUG_ATTEMPTS = 3;
 
@@ -72,6 +80,11 @@ export async function createLink(
   throw new ApiError("INTERNAL", "Could not allocate a slug");
 }
 
+/** Constant-time check of a secret key against the stored hash. */
+async function keyMatches(row: LinkRow, secretKey: string): Promise<boolean> {
+  return timingSafeEqualHex(await sha256Hex(secretKey), row.secret_hash);
+}
+
 /** Loads a link and checks the caller's secret key (constant-time). */
 export async function authorizeLink(
   db: D1Database,
@@ -80,11 +93,43 @@ export async function authorizeLink(
 ): Promise<LinkRow> {
   const row = await findLinkBySlug(db, slug);
   if (row === null) throw new ApiError("NOT_FOUND", "Link not found");
-  const providedHash = await sha256Hex(secretKey);
-  if (!timingSafeEqualHex(providedHash, row.secret_hash)) {
+  if (!(await keyMatches(row, secretKey))) {
     throw new ApiError("UNAUTHORIZED", "Invalid secret key");
   }
   return row;
+}
+
+/**
+ * Status, scan count and last scan of each code in "My QR codes", in request order. Each
+ * code is checked against its own key; a wrong key or a deleted link fails only that entry.
+ */
+export async function summarizeLinks(
+  db: D1Database,
+  items: LinkSummariesRequest["links"],
+): Promise<LinkSummary[]> {
+  const rows = await findLinksBySlugs(db, [...new Set(items.map((item) => item.slug))]);
+  const bySlug = new Map(rows.map((row) => [row.slug, row]));
+  const checked = await Promise.all(
+    items.map(async ({ slug, secretKey }) => {
+      const row = bySlug.get(slug);
+      if (row === undefined) return { slug, error: "NOT_FOUND" as const };
+      if (!(await keyMatches(row, secretKey))) return { slug, error: "UNAUTHORIZED" as const };
+      return { slug, row };
+    }),
+  );
+  const authorizedIds = checked.flatMap((entry) => ("row" in entry ? [entry.row.id] : []));
+  const scans = await fetchScanSummaries(db, [...new Set(authorizedIds)]);
+  return checked.map((entry): LinkSummary => {
+    if (!("row" in entry)) return { ok: false, slug: entry.slug, error: entry.error };
+    const summary = scans.get(entry.row.id);
+    return {
+      ok: true,
+      slug: entry.slug,
+      status: effectiveStatus(entry.row),
+      scans: summary?.scans ?? 0,
+      lastScanAt: summary?.last_scan ?? null,
+    };
+  });
 }
 
 export async function getLink(db: D1Database, slug: string, secretKey: string) {

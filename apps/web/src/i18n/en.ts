@@ -23,6 +23,7 @@ export const en = {
     retry: "Retry",
     copy: "Copy",
     copied: "Copied!",
+    copyFailed: "Copy failed",
     close: "Close",
   },
   errors: {
@@ -52,6 +53,7 @@ export const en = {
     qrAlt: (url: string) => `QR code for ${url}`,
     downloadPng: "Download PNG (print)",
     downloadSvg: "Download SVG",
+    downloadFailed: "The QR code image could not be created. Please try again.",
     shortLink: "Short link",
     keyTitle: "Secret key — shown only once",
     keyWarning:
@@ -72,7 +74,21 @@ export const en = {
     intro:
       "This list is stored in this browser only. Export it as JSON to back it up or move it to another device.",
     empty: "No QR codes saved in this browser yet.",
-    columns: { label: "Name", slug: "Code", created: "Created", actions: "Actions" },
+    columns: {
+      label: "Name",
+      slug: "Code",
+      created: "Created",
+      scans: "Scans",
+      lastScan: "Last scan",
+      actions: "Actions",
+    },
+    status: { disabled: "Disabled", blocked: "Blocked" },
+    never: "Never",
+    pending: "…",
+    unavailable: "—",
+    linkDeleted: "Deleted",
+    keyInvalid: "Key not valid",
+    summaryError: "Scan counts could not be loaded.",
     open: "Statistics",
     remove: "Remove from list",
     removeConfirm:
@@ -110,18 +126,22 @@ export const en = {
   },
   statsEntry: {
     title: "View statistics",
-    intro: "Enter the link code and its secret key.",
-    slugLabel: "Link code (7 characters)",
+    intro: "Paste the private statistics link, or enter the link code and its secret key.",
+    slugLabel: "Link code or private link",
+    slugHint: "The 7-character code, or the whole private link (…#/stats/…) you bookmarked.",
     keyLabel: "Secret key",
+    keyHint: "Not needed when you paste the private link.",
     submit: "Show statistics",
     invalid: "Badly formatted code or key.",
+    invalidEntry:
+      "Paste the whole private link, or enter the 7-character link code with its 43-character secret key.",
   },
   stats: {
     title: "Statistics",
     loading: "Loading statistics…",
     totals: {
       scans: "Scans",
-      uniqueVisitors: "Unique visitors (approx.)",
+      uniqueVisitors: "Visitors (unique per day)",
       firstScan: "First scan",
       lastScan: "Last scan",
       never: "—",
@@ -135,6 +155,10 @@ export const en = {
       all: "All time",
     },
     includeBots: "Include bots and link previews",
+    visitorsNote:
+      "To protect privacy, visitors are never recognized from one day to the next: someone who scans on three different days counts as three visitors.",
+    timezoneNote: (tz: string) =>
+      `Dates and times use your browser's time zone (${tz}). In the CSV export, scan times are in UTC.`,
     sections: {
       overTime: "Scans over time",
       where: "Where people scan",

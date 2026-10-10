@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseSlugInput } from "../src/lib/short-link.js";
+import { parseSlugInput, parseStatsLink } from "../src/lib/short-link.js";
 
 describe("parseSlugInput", () => {
   it("accepts a bare code or a full short link", () => {
@@ -21,6 +21,33 @@ describe("parseSlugInput", () => {
       "Ab3-Y9z",
     ]) {
       expect(parseSlugInput(input)).toBeNull();
+    }
+  });
+});
+
+describe("parseStatsLink", () => {
+  const key = "Ab-_" + "x".repeat(39);
+
+  it("extracts the code and key from a pasted private link", () => {
+    expect(parseStatsLink(`https://someone.github.io/qr-tracker/#/stats/Ab3xY9z/${key}`)).toEqual({
+      slug: "Ab3xY9z",
+      secretKey: key,
+    });
+    expect(parseStatsLink(`  http://localhost:5173/qr-tracker/#/stats/Ab3xY9z/${key}/ `)).toEqual({
+      slug: "Ab3xY9z",
+      secretKey: key,
+    });
+  });
+
+  it("rejects bare codes, short links and malformed private links", () => {
+    for (const input of [
+      "Ab3xY9z",
+      "https://x.example/r/Ab3xY9z",
+      `https://x.example/#/stats/Ab3xY9/${key}`,
+      `https://x.example/#/stats/Ab3xY9z/${key.slice(1)}`,
+      `https://x.example/#/stats/Ab3xY9z/${key}/extra`,
+    ]) {
+      expect(parseStatsLink(input)).toBeNull();
     }
   });
 });

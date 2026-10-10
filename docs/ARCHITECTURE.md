@@ -53,7 +53,12 @@ no reporter identity stored); the operator lists and dismisses reports through
 **Stats** — `GET /api/links/:slug/stats`: one atomic D1 batch of aggregate queries
 (grouped by UTC hour/day over `idx_scans_link_time`), then the buckets are mapped to the
 requested IANA timezone with Intl. Unique visitors are per-UTC-day by construction
-(the salt rotates at UTC midnight).
+(the salt rotates at UTC midnight), so the dashboard labels them "unique per day".
+`GET /api/links/:slug/export` reads `from`/`to` in the same `tz`, so a CSV covers the
+dashboard's days; its rows keep UTC timestamps. `POST /api/links/summaries` serves "My QR
+codes": up to 50 `{slug, secretKey}` pairs in the body (never in a URL), each checked
+against its own hash, answered with status, human scan count and last scan from one
+grouped query — one rate-limit hit for the whole list.
 
 **Kill switch** — the API exposes three statuses: `active`, `disabled` (owner) and
 `blocked` (admin only). In D1 the owner's choice (`status`: active/disabled) and the
