@@ -6,6 +6,7 @@ import {
   loadCodes,
   removeCode,
   saveCode,
+  setStoredViewKey,
 } from "../src/lib/storage.js";
 import type { StoredCode } from "../src/lib/storage.js";
 
@@ -42,6 +43,20 @@ describe("local codes storage", () => {
     });
     expect(saveCode(code("ccccccc"))).toBe(false);
     expect(loadCodes()).toEqual([]);
+  });
+
+  it("keeps and forgets the read-only key of a listed code only", () => {
+    saveCode(code("aaaaaaa"));
+    expect(setStoredViewKey("aaaaaaa", "v".repeat(43))).toBe(true);
+    expect(loadCodes()[0]?.viewKey).toBe("v".repeat(43));
+    // Exported with the code, and accepted back on import.
+    const backup = exportCodesJson();
+    expect(setStoredViewKey("aaaaaaa", null)).toBe(true);
+    expect(loadCodes()[0]).not.toHaveProperty("viewKey");
+    expect(importCodesJson(backup)).toBe(1);
+    expect(loadCodes()[0]?.viewKey).toBe("v".repeat(43));
+
+    expect(setStoredViewKey("zzzzzzz", "v".repeat(43))).toBe(false);
   });
 
   it("removes codes by slug", () => {

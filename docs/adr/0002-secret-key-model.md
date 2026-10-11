@@ -31,4 +31,11 @@ and compares digests with `crypto.subtle.timingSafeEqual`. The key travels only 
   the "My QR codes" localStorage list plus its JSON export mitigate accidental loss.
 - Anyone with the link's key has full control of that link (no revocation short of
   deleting the link). Acceptable for the threat model of a lab tool.
+- Since 1.3.0 an owner can also create a **read-only key** (migration 0005, `view_hash`):
+  same format, same one-time display and hash-only storage, carried the same way
+  (`#/stats/:slug/:key`). It opens `GET /api/links/:slug`, the stats and the export
+  (the API answers `access: "viewer"`), never `PATCH`/`DELETE` or the key endpoints, which
+  check the secret key's hash only. `POST /api/links/:slug/view-key` creates or replaces
+  it (the old one stops working), `DELETE` revokes it. This makes sharing the statistics
+  safe; rotating the secret key itself is still not offered.
 - The admin kill switch (`blocked`, stored in its own `blocked_at` column since migration 0003) cannot be set or cleared through the owner's API surface.

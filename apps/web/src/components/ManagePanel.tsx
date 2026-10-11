@@ -6,7 +6,10 @@ import { useNavigate } from "react-router";
 
 import { en } from "../i18n/en.js";
 import { api, ApiRequestError } from "../lib/api.js";
-import { removeCode } from "../lib/storage.js";
+import { privateStatsUrl } from "../lib/short-link.js";
+import { loadCodes, removeCode, setStoredViewKey } from "../lib/storage.js";
+
+import { CopyButton } from "./CopyButton.js";
 
 function errorMessage(err: unknown): string {
   return err instanceof ApiRequestError ? en.errors[err.code] : en.app.error;
@@ -18,10 +21,20 @@ export interface ManagePanelProps {
   onUpdated: (link: Link) => void;
 }
 
-/** Owner management: edit destination, disable/enable, permanent delete. */
+/** The read-only key "My QR codes" kept for this link, if any. */
+function storedViewKey(slug: string): string | null {
+  return loadCodes().find((code) => code.slug === slug)?.viewKey ?? null;
+}
+
+/**
+ * Owner management: edit destination, disable/enable, share read-only, permanent delete.
+ */
 export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
   const navigate = useNavigate();
   const [targetUrl, setTargetUrl] = useState(link.targetUrl);
+  const [viewKey, setViewKey] = useState<string | null>(() =>
+    link.hasViewKey ? storedViewKey(link.slug) : null,
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +73,29 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
     const status = link.status === "active" ? "disabled" : "active";
     run(async () => {
       onUpdated(await api.updateLink(link.slug, secretKey, { status }));
+    });
+  }
+
+  function onCreateViewKey() {
+    if (link.hasViewKey && !window.confirm(en.stats.share.replaceConfirm)) return;
+    run(async () => {
+      const created = await api.createViewKey(link.slug, secretKey);
+      // Kept with the code in "My QR codes" (when it is there), so it can be copied again.
+      setStoredViewKey(link.slug, created.viewKey);
+      setViewKey(created.viewKey);
+      onUpdated({ ...link, hasViewKey: true });
+      setMessage(en.stats.share.created);
+    });
+  }
+
+  function onRevokeViewKey() {
+    if (!window.confirm(en.stats.share.revokeConfirm)) return;
+    run(async () => {
+      await api.revokeViewKey(link.slug, secretKey);
+      setStoredViewKey(link.slug, null);
+      setViewKey(null);
+      onUpdated({ ...link, hasViewKey: false });
+      setMessage(en.stats.share.revoked);
     });
   }
 
@@ -117,6 +153,27 @@ export function ManagePanel({ link, secretKey, onUpdated }: ManagePanelProps) {
         </>
       )}
 
+      <h3>{en.stats.share.title}</h3>
+      <p className="muted">{en.stats.share.intro}</p>
+      {link.hasViewKey && viewKey !== null && (
+        <div className="copy-row" role="group" aria-label={en.stats.share.linkLabel}>
+          <code>{privateStatsUrl(link.slug, viewKey)}</code>
+          <CopyButton value={privateStatsUrl(link.slug, viewKey)} label={en.stats.share.copy} />
+        </div>
+      )}
+      {link.hasViewKey && viewKey === null && <p className="muted">{en.stats.share.notKept}</p>}
+      <div className="actions-row">
+        <button type="button" disabled={busy} onClick={onCreateViewKey}>
+          {link.hasViewKey ? en.stats.share.replace : en.stats.share.create}
+        </button>
+        {link.hasViewKey && (
+          <button type="button" disabled={busy} onClick={onRevokeViewKey}>
+            {en.stats.share.revoke}
+          </button>
+        )}
+      </div>
+
+      <h3>{en.stats.manage.deleteTitle}</h3>
       <div className="actions-row">
         <button type="button" className="danger" disabled={busy} onClick={onDelete}>
           {en.stats.manage.delete}

@@ -13,6 +13,15 @@ export function parseSlugInput(input: string): string | null {
 }
 
 /**
+ * Statistics link of this web app for a code and a key (secret or read-only). The key
+ * lives only in the fragment, which browsers never send to any server.
+ */
+export function privateStatsUrl(slug: string, key: string): string {
+  const { origin, pathname, search } = window.location;
+  return `${origin}${pathname}${search}#/stats/${slug}/${key}`;
+}
+
+/**
  * Extracts the code and key from a pasted private statistics link
  * ("https://…/qr-tracker/#/stats/Ab3xY9z/<43-character key>"). Returns null otherwise.
  */

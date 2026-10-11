@@ -1,7 +1,12 @@
 import { env } from "cloudflare:workers";
 
 import { RATE_LIMITS } from "@qr-tracker/shared";
-import type { CreateLinkResponse, Link, LinkSummariesResponse } from "@qr-tracker/shared";
+import type {
+  CreateLinkResponse,
+  Link,
+  LinkSummariesResponse,
+  ViewKeyResponse,
+} from "@qr-tracker/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../src/app.js";
@@ -416,5 +421,101 @@ describe("POST /api/links/summaries", () => {
       secretKey: created.secretKey,
     }));
     expect((await summarize(tooMany)).status).toBe(400);
+  });
+});
+
+describe("read-only key", () => {
+  async function call(path: string, key: string, init: RequestInit = {}): Promise<Response> {
+    return app.request(
+      `${BASE}/api/links/${path}`,
+      {
+        ...init,
+        headers: { Authorization: `Bearer ${key}`, "CF-Connecting-IP": crypto.randomUUID() },
+      },
+      env,
+    );
+  }
+
+  async function createViewKey(created: CreateLinkResponse): Promise<string> {
+    const res = await call(`${created.slug}/view-key`, created.secretKey, { method: "POST" });
+    expect(res.status).toBe(201);
+    return (await res.json<ViewKeyResponse>()).viewKey;
+  }
+
+  it("opens the link, its stats and its export, but nothing else", async () => {
+    const created = await createTestLink();
+    const viewKey = await createViewKey(created);
+    expect(viewKey).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(viewKey).not.toBe(created.secretKey);
+
+    const link = await call(created.slug, viewKey);
+    expect(link.status).toBe(200);
+    expect(await link.json<Link>()).toMatchObject({ access: "viewer", hasViewKey: true });
+    expect((await call(`${created.slug}/stats`, viewKey)).status).toBe(200);
+    expect((await call(`${created.slug}/export`, viewKey)).status).toBe(200);
+
+    // Changing, deleting or re-sharing the link needs the secret key.
+    const patch = await app.request(
+      `${BASE}/api/links/${created.slug}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${viewKey}`,
+          "Content-Type": "application/json",
+          "CF-Connecting-IP": crypto.randomUUID(),
+        },
+        body: JSON.stringify({ status: "disabled" }),
+      },
+      env,
+    );
+    expect(patch.status).toBe(401);
+    expect((await call(created.slug, viewKey, { method: "DELETE" })).status).toBe(401);
+    expect((await call(`${created.slug}/view-key`, viewKey, { method: "POST" })).status).toBe(401);
+    expect((await call(`${created.slug}/view-key`, viewKey, { method: "DELETE" })).status).toBe(
+      401,
+    );
+
+    const owner = await call(created.slug, created.secretKey);
+    expect(await owner.json<Link>()).toMatchObject({ access: "owner", status: "active" });
+  });
+
+  it("stores only a hash, and a new key replaces the old one", async () => {
+    const created = await createTestLink();
+    const first = await createViewKey(created);
+    const row = await env.DB.prepare("SELECT view_hash FROM links WHERE slug = ?1")
+      .bind(created.slug)
+      .first<{ view_hash: string }>();
+    expect(row?.view_hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(row?.view_hash).not.toContain(first);
+
+    const second = await createViewKey(created);
+    expect((await call(created.slug, first)).status).toBe(401);
+    expect((await call(created.slug, second)).status).toBe(200);
+  });
+
+  it("can be revoked by the owner", async () => {
+    const created = await createTestLink();
+    const viewKey = await createViewKey(created);
+    const res = await call(`${created.slug}/view-key`, created.secretKey, { method: "DELETE" });
+    expect(res.status).toBe(204);
+    expect((await call(created.slug, viewKey)).status).toBe(401);
+    const owner = await call(created.slug, created.secretKey);
+    expect(await owner.json<Link>()).toMatchObject({ hasViewKey: false });
+  });
+
+  it("is accepted by the My QR codes summaries", async () => {
+    const created = await createTestLink();
+    const viewKey = await createViewKey(created);
+    const res = await app.request(
+      `${BASE}/api/links/summaries`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "CF-Connecting-IP": crypto.randomUUID() },
+        body: JSON.stringify({ links: [{ slug: created.slug, secretKey: viewKey }] }),
+      },
+      env,
+    );
+    const body = await res.json<LinkSummariesResponse>();
+    expect(body.summaries[0]).toMatchObject({ ok: true, slug: created.slug });
   });
 });

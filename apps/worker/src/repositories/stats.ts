@@ -38,7 +38,6 @@ export interface StatsAggregates {
     os: TopRow[];
     browser: TopRow[];
     language: TopRow[];
-    as_organization: TopRow[];
   };
 }
 
@@ -46,14 +45,7 @@ export interface StatsAggregates {
  * Columns exposed as "top …" lists. Interpolated into SQL — fixed allowlist only.
  * Cities have their own query (ranked per country).
  */
-const TOP_COLUMNS = [
-  "country",
-  "device_type",
-  "os",
-  "browser",
-  "language",
-  "as_organization",
-] as const;
+const TOP_COLUMNS = ["country", "device_type", "os", "browser", "language"] as const;
 
 function rowsOf<T>(result: D1Result): T[] {
   return result.results as T[];
@@ -187,7 +179,6 @@ export interface ExportRow extends Record<string, unknown> {
   region: string | null;
   city: string | null;
   timezone: string | null;
-  as_organization: string | null;
   device_type: string;
   os: string | null;
   browser: string | null;

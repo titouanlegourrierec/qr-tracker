@@ -13,6 +13,8 @@ export const storedCodeSchema = z.object({
   label: z.string().nullable(),
   secretKey: secretKeySchema,
   createdAt: z.iso.datetime(),
+  /** Read-only key the owner created to share the statistics (absent in older backups). */
+  viewKey: secretKeySchema.optional(),
 });
 export type StoredCode = z.infer<typeof storedCodeSchema>;
 
@@ -52,6 +54,24 @@ export function saveCode(code: StoredCode): boolean {
   const items = readStore().filter((c) => c.slug !== code.slug);
   items.push(code);
   return writeStore(items);
+}
+
+/**
+ * Keeps (or forgets, with null) the read-only key of a code already in the list. Returns
+ * false when the code is not in this browser's list or the list could not be written.
+ */
+export function setStoredViewKey(slug: string, viewKey: string | null): boolean {
+  const items = readStore();
+  const code = items.find((c) => c.slug === slug);
+  if (code === undefined) return false;
+  const updated: StoredCode = {
+    slug: code.slug,
+    label: code.label,
+    secretKey: code.secretKey,
+    createdAt: code.createdAt,
+    ...(viewKey === null ? {} : { viewKey }),
+  };
+  return writeStore(items.map((c) => (c.slug === slug ? updated : c)));
 }
 
 export function removeCode(slug: string): void {

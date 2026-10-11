@@ -62,7 +62,6 @@ export const CSV_COLUMNS = [
   "region",
   "city",
   "timezone",
-  "as_organization",
   "device_type",
   "os",
   "browser",

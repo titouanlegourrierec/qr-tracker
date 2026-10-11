@@ -3,12 +3,24 @@ import { describe, expect, it } from "vitest";
 import { toCsv } from "../src/lib/csv.js";
 import {
   addDays,
+  formatterCacheSize,
   inclusiveDayCount,
   localDayStartUtcMs,
   localToday,
   utcDayToLocalDate,
   utcInstantToLocalParts,
 } from "../src/lib/timezone.js";
+
+describe("formatter cache", () => {
+  it("stays bounded when many offset timezones are requested", () => {
+    const noonUtc = Date.parse("2026-06-15T12:00:00Z");
+    for (let minutes = 0; minutes < 300; minutes++) {
+      const offset = `+${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+      expect(utcInstantToLocalParts(noonUtc, offset).hour).toBe(12 + Math.floor(minutes / 60));
+    }
+    expect(formatterCacheSize()).toBeLessThanOrEqual(100);
+  });
+});
 
 describe("utcInstantToLocalParts", () => {
   it("maps winter (CET, +1) and summer (CEST, +2) instants for Paris", () => {

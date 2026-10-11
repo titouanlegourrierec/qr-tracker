@@ -29,8 +29,9 @@
     "crons": ["5 0 * * *"],
   },
   "vars": {
-    // localhost:5173 = vite dev, localhost:4173 = vite preview (Playwright E2E).
-    "ALLOWED_ORIGINS": "https://titouanlegourrierec.github.io,http://localhost:5173,http://localhost:4173",
+    // Production web app only. Local origins (vite dev / preview) are added by .dev.vars,
+    // which overrides vars under `wrangler dev` and is never deployed.
+    "ALLOWED_ORIGINS": "https://titouanlegourrierec.github.io",
     "RETENTION_DAYS": "365",
     // The web app, where "/" and "/report" on this worker redirect.
     "WEB_APP_URL": "https://titouanlegourrierec.github.io/qr-tracker/",

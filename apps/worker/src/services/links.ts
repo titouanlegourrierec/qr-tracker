@@ -2,9 +2,11 @@ import { validateTargetUrl } from "@qr-tracker/shared";
 import type {
   CreateLinkRequest,
   CreateLinkResponse,
+  LinkAccess,
   LinkSummariesRequest,
   LinkSummary,
   UpdateLinkRequest,
+  ViewKeyResponse,
 } from "@qr-tracker/shared";
 
 import { ApiError } from "../lib/api-error.js";
@@ -20,6 +22,7 @@ import {
   insertLink,
   isUniqueConstraintError,
   effectiveStatus,
+  setViewHash,
   toLink,
   updateLinkAsOwner,
 } from "../repositories/links.js";
@@ -80,22 +83,35 @@ export async function createLink(
   throw new ApiError("INTERNAL", "Could not allocate a slug");
 }
 
-/** Constant-time check of a secret key against the stored hash. */
-async function keyMatches(row: LinkRow, secretKey: string): Promise<boolean> {
-  return timingSafeEqualHex(await sha256Hex(secretKey), row.secret_hash);
+/** What a key may do on this link: constant-time checks against both stored hashes. */
+async function accessFor(row: LinkRow, key: string): Promise<LinkAccess | null> {
+  const hash = await sha256Hex(key);
+  if (timingSafeEqualHex(hash, row.secret_hash)) return "owner";
+  if (row.view_hash !== null && timingSafeEqualHex(hash, row.view_hash)) return "viewer";
+  return null;
 }
 
-/** Loads a link and checks the caller's secret key (constant-time). */
+/** Loads a link for any key holder: the owner or someone the owner shared a read-only key with. */
+export async function authorizeLinkRead(
+  db: D1Database,
+  slug: string,
+  key: string,
+): Promise<{ row: LinkRow; access: LinkAccess }> {
+  const row = await findLinkBySlug(db, slug);
+  if (row === null) throw new ApiError("NOT_FOUND", "Link not found");
+  const access = await accessFor(row, key);
+  if (access === null) throw new ApiError("UNAUTHORIZED", "Invalid secret key");
+  return { row, access };
+}
+
+/** Loads a link and checks the caller holds its secret key (a read-only key is refused). */
 export async function authorizeLink(
   db: D1Database,
   slug: string,
   secretKey: string,
 ): Promise<LinkRow> {
-  const row = await findLinkBySlug(db, slug);
-  if (row === null) throw new ApiError("NOT_FOUND", "Link not found");
-  if (!(await keyMatches(row, secretKey))) {
-    throw new ApiError("UNAUTHORIZED", "Invalid secret key");
-  }
+  const { row, access } = await authorizeLinkRead(db, slug, secretKey);
+  if (access !== "owner") throw new ApiError("UNAUTHORIZED", "Invalid secret key");
   return row;
 }
 
@@ -113,7 +129,9 @@ export async function summarizeLinks(
     items.map(async ({ slug, secretKey }) => {
       const row = bySlug.get(slug);
       if (row === undefined) return { slug, error: "NOT_FOUND" as const };
-      if (!(await keyMatches(row, secretKey))) return { slug, error: "UNAUTHORIZED" as const };
+      if ((await accessFor(row, secretKey)) === null) {
+        return { slug, error: "UNAUTHORIZED" as const };
+      }
       return { slug, row };
     }),
   );
@@ -132,8 +150,9 @@ export async function summarizeLinks(
   });
 }
 
-export async function getLink(db: D1Database, slug: string, secretKey: string) {
-  return toLink(await authorizeLink(db, slug, secretKey));
+export async function getLink(db: D1Database, slug: string, key: string) {
+  const { row, access } = await authorizeLinkRead(db, slug, key);
+  return toLink(row, access);
 }
 
 export async function updateLink(
@@ -168,7 +187,30 @@ export async function updateLink(
   const updated = await findLinkBySlug(db, slug);
   if (updated === null) throw new ApiError("INTERNAL", "Link vanished during update");
   log("link_updated", { slug, statusChanged: patch.status !== undefined });
-  return toLink(updated);
+  return toLink(updated, "owner");
+}
+
+/**
+ * Creates the read-only key, or replaces it: the previous read-only link stops working.
+ * Like the secret key, it is returned once and only its hash is stored.
+ */
+export async function createViewKey(
+  db: D1Database,
+  slug: string,
+  secretKey: string,
+): Promise<ViewKeyResponse> {
+  const row = await authorizeLink(db, slug, secretKey);
+  const viewKey = generateSecretKey();
+  await setViewHash(db, row.id, await sha256Hex(viewKey));
+  log("view_key_created", { slug, replaced: row.view_hash !== null });
+  return { viewKey };
+}
+
+/** Revokes the read-only key: the shared read-only link stops working. */
+export async function revokeViewKey(db: D1Database, slug: string, secretKey: string) {
+  const row = await authorizeLink(db, slug, secretKey);
+  await setViewHash(db, row.id, null);
+  log("view_key_revoked", { slug });
 }
 
 export async function deleteLink(db: D1Database, slug: string, secretKey: string): Promise<void> {

@@ -15,6 +15,12 @@ All notable changes to this project are documented here. The format follows
   key.
 - A **Retry** button when statistics or scan counts fail to load, a confirmation after a QR
   code is deleted, and a message when copying or creating the QR image fails.
+- **Read-only link** to share a QR code's statistics: it opens the dashboard and the CSV
+  export but cannot change, disable or delete the QR code. The owner creates, replaces or
+  revokes it from the management panel (`POST`/`DELETE /api/links/:slug/view-key`, migration
+  0005); "My QR codes" keeps it with the code and in the JSON export.
+- The web app refuses to run inside a frame on another site (clickjacking protection, since
+  GitHub Pages cannot send `frame-ancestors`).
 
 ### Changed
 
@@ -25,6 +31,17 @@ All notable changes to this project are documented here. The format follows
   scans on several days counts several times.
 - The dashboard names the time zone it uses, and dates follow the browser's language
   settings instead of a fixed British format.
+- Timezone parameters are canonicalized (`eUrOpE/pArIs` → `Europe/Paris`) and the worker's
+  formatter cache is bounded.
+- Production CORS allows only the GitHub Pages origin: the localhost origins moved to
+  `.dev.vars`, and `pnpm dev` appends new example settings to an existing `.dev.vars`.
+
+### Removed
+
+- The visitor's network operator (ISP) is no longer collected: the `as_organization` column
+  is dropped with every stored value (migration 0004) and left the CSV export. The
+  deprecated `topIsps` stats field stays, always empty, for web app versions cached before
+  this release.
 
 ## [1.2.0] - 2026-10-09
 

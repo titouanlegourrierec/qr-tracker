@@ -51,7 +51,7 @@ export function adminRoutes(): Hono<AppBindings> {
     log("admin_status_change", { slug, status: parsed.data.status });
     const updated = await findLinkBySlug(c.env.DB, slug);
     if (updated === null) throw new ApiError("INTERNAL", "Link vanished during update");
-    return c.json(toLink(updated));
+    return c.json(toLink(updated, "owner"));
   });
 
   routes.get("/reports", async (c) => {

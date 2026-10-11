@@ -15,7 +15,6 @@ export interface ScanContext {
   region: string | null;
   city: string | null;
   timezone: string | null;
-  asOrganization: string | null;
 }
 
 /**
@@ -45,7 +44,6 @@ export async function recordScan(
     region: context.region,
     city: context.city,
     timezone: context.timezone,
-    asOrganization: context.asOrganization,
     deviceType,
     os,
     browser,

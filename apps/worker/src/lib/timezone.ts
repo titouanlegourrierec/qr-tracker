@@ -26,11 +26,22 @@ const WEEKDAY_INDEX: Record<string, number> = {
   Sun: 6,
 };
 
+/**
+ * One formatter per timezone. Query timezones arrive canonicalized, but offsets such as
+ * "+05:30" are valid too (one entry per minute of offset), so the cache is bounded.
+ */
+const FORMATTER_CACHE_MAX = 100;
 const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+/** Number of cached formatters (bounded by FORMATTER_CACHE_MAX). */
+export function formatterCacheSize(): number {
+  return formatterCache.size;
+}
 
 function formatterFor(tz: string): Intl.DateTimeFormat {
   let fmt = formatterCache.get(tz);
   if (fmt === undefined) {
+    if (formatterCache.size >= FORMATTER_CACHE_MAX) formatterCache.clear();
     fmt = new Intl.DateTimeFormat("en-US", {
       timeZone: tz,
       year: "numeric",

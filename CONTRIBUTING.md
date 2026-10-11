@@ -11,7 +11,10 @@ pnpm dev        # worker on :8787 (migrations auto-applied) + web on :5173
 ```
 
 `apps/worker/.dev.vars` is created automatically from `.dev.vars.example` with
-Cloudflare's Turnstile _test_ keys — creation works offline-locally out of the box.
+Cloudflare's Turnstile _test_ keys — creation works offline-locally out of the box. Settings
+added to the example later (such as `ALLOWED_ORIGINS`, the local origins allowed to call the
+API, which production does not allow) are appended to an existing `.dev.vars` on the next
+`pnpm dev`, without touching the values already there.
 
 ## Commands
 

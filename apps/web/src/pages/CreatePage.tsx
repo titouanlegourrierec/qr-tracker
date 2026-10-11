@@ -10,13 +10,8 @@ import { en } from "../i18n/en.js";
 import { api, ApiRequestError } from "../lib/api.js";
 import { downloadBlob, downloadUrl } from "../lib/download.js";
 import { qrPngDataUrl, qrSvg } from "../lib/qr.js";
+import { privateStatsUrl } from "../lib/short-link.js";
 import { saveCode } from "../lib/storage.js";
-
-/** Private dashboard URL — the key lives only in the fragment (never sent anywhere). */
-function buildStatsUrl(slug: string, secretKey: string): string {
-  const { origin, pathname, search } = window.location;
-  return `${origin}${pathname}${search}#/stats/${slug}/${secretKey}`;
-}
 
 interface Created {
   response: CreateLinkResponse;
@@ -29,7 +24,7 @@ function CreationResult({ created: { response: created, savedLocally } }: { crea
   const [keySaved, setKeySaved] = useState(false);
   const [downloadFailed, setDownloadFailed] = useState(false);
   const successRef = useRef<HTMLParagraphElement>(null);
-  const statsUrl = buildStatsUrl(created.slug, created.secretKey);
+  const statsUrl = privateStatsUrl(created.slug, created.secretKey);
 
   // The form was just replaced under the keyboard focus: move it to the confirmation.
   useEffect(() => {

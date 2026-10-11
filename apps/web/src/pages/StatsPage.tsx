@@ -199,6 +199,12 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
           <CopyButton value={shortUrl} />
         </div>
       )}
+      {link?.access === "viewer" && (
+        <>
+          <p className="badge">{en.stats.readOnlyBadge}</p>
+          <p className="muted">{en.stats.readOnlyNote}</p>
+        </>
+      )}
 
       {loading && (
         <p className="muted" role="status">
@@ -409,13 +415,16 @@ function StatsDashboard({ slug, secretKey }: { slug: string; secretKey: string }
             </>
           )}
 
-          <ManagePanel
-            link={link}
-            secretKey={secretKey}
-            onUpdated={(updated) => {
-              setData((current) => (current === null ? null : { ...current, link: updated }));
-            }}
-          />
+          {/* A read-only key cannot manage the link: the worker refuses it anyway. */}
+          {link.access === "owner" && (
+            <ManagePanel
+              link={link}
+              secretKey={secretKey}
+              onUpdated={(updated) => {
+                setData((current) => (current === null ? null : { ...current, link: updated }));
+              }}
+            />
+          )}
         </>
       )}
     </>

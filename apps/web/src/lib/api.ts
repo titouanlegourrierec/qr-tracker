@@ -6,6 +6,7 @@ import {
   linkSummariesResponseSchema,
   statsResponseSchema,
   SUMMARY_MAX_LINKS,
+  viewKeyResponseSchema,
 } from "@qr-tracker/shared";
 import type {
   CreateLinkRequest,
@@ -18,6 +19,7 @@ import type {
   LinkSummary,
   StatsResponse,
   UpdateLinkRequest,
+  ViewKeyResponse,
 } from "@qr-tracker/shared";
 import type { z } from "zod";
 
@@ -144,6 +146,21 @@ export const api = {
 
   async deleteLink(slug: string, secretKey: string): Promise<void> {
     await doFetch(`/api/links/${slug}`, { method: "DELETE", headers: authHeader(secretKey) });
+  },
+
+  /** Creates or replaces the read-only key (the previous read-only link stops working). */
+  createViewKey(slug: string, secretKey: string): Promise<ViewKeyResponse> {
+    return requestJson(`/api/links/${slug}/view-key`, viewKeyResponseSchema, {
+      method: "POST",
+      headers: authHeader(secretKey),
+    });
+  },
+
+  async revokeViewKey(slug: string, secretKey: string): Promise<void> {
+    await doFetch(`/api/links/${slug}/view-key`, {
+      method: "DELETE",
+      headers: authHeader(secretKey),
+    });
   },
 
   /** Downloads the CSV via fetch so the key stays in the header, returns a Blob. */

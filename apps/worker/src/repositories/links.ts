@@ -1,4 +1,4 @@
-import type { Link, LinkStatus } from "@qr-tracker/shared";
+import type { Link, LinkAccess, LinkStatus } from "@qr-tracker/shared";
 
 export interface LinkRow {
   id: number;
@@ -10,6 +10,8 @@ export interface LinkRow {
   status: LinkStatus;
   /** Set while the operator blocks the link (admin kill switch), null otherwise. */
   blocked_at: string | null;
+  /** SHA-256 of the read-only key, null while the owner has not created one. */
+  view_hash: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,7 +21,7 @@ export function effectiveStatus(row: Pick<LinkRow, "status" | "blocked_at">): Li
   return row.blocked_at === null ? row.status : "blocked";
 }
 
-export function toLink(row: LinkRow): Link {
+export function toLink(row: LinkRow, access: LinkAccess): Link {
   return {
     slug: row.slug,
     targetUrl: row.target_url,
@@ -27,6 +29,8 @@ export function toLink(row: LinkRow): Link {
     status: effectiveStatus(row),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    access,
+    hasViewKey: row.view_hash !== null,
   };
 }
 
@@ -88,6 +92,15 @@ export async function updateLinkAsOwner(
     .bind(patch.targetUrl ?? null, patch.status ?? null, nowIso, id)
     .run();
   return result.meta.changes > 0;
+}
+
+/** Creates, replaces (new hash) or revokes (null) the read-only key. */
+export async function setViewHash(
+  db: D1Database,
+  id: number,
+  viewHash: string | null,
+): Promise<void> {
+  await db.prepare("UPDATE links SET view_hash = ?1 WHERE id = ?2").bind(viewHash, id).run();
 }
 
 /** Operator kill switch. Never touches the owner's status, so unblocking restores it. */

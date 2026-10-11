@@ -16,6 +16,8 @@ export default defineConfig({
           // failure paths by mocking the siteverify call.
           TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
           ADMIN_TOKEN: "test-admin-token",
+          // As under `wrangler dev` (.dev.vars): the production value plus vite dev.
+          ALLOWED_ORIGINS: "https://titouanlegourrierec.github.io,http://localhost:5173",
         },
       },
     }),

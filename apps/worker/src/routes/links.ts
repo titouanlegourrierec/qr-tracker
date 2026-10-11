@@ -19,10 +19,12 @@ import { addDays, localDayStartIso } from "../lib/timezone.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 import { fetchScansForExport } from "../repositories/stats.js";
 import {
-  authorizeLink,
+  authorizeLinkRead,
   createLink,
+  createViewKey,
   deleteLink,
   getLink,
+  revokeViewKey,
   summarizeLinks,
   updateLink,
 } from "../services/links.js";
@@ -97,8 +99,8 @@ export function linksRoutes(): Hono<AppBindings> {
     rateLimit("authenticated", { failOpen: true, keySuffix: slugSuffix }),
     async (c) => {
       const query = parseQuery(c, statsQuerySchema);
-      const link = await authorizeLink(c.env.DB, getSlugParam(c), getBearerToken(c));
-      const stats = await computeStats(c.env.DB, link, query);
+      const { row } = await authorizeLinkRead(c.env.DB, getSlugParam(c), getBearerToken(c));
+      const stats = await computeStats(c.env.DB, row, query);
       return c.json(stats);
     },
   );
@@ -109,7 +111,7 @@ export function linksRoutes(): Hono<AppBindings> {
     async (c) => {
       const query = parseQuery(c, exportQuerySchema);
       const slug = getSlugParam(c);
-      const link = await authorizeLink(c.env.DB, slug, getBearerToken(c));
+      const { row: link } = await authorizeLinkRead(c.env.DB, slug, getBearerToken(c));
       // Days are read in the dashboard's timezone, like the stats; rows stay UTC timestamps.
       const rows = await fetchScansForExport(
         c.env.DB,
@@ -151,6 +153,25 @@ export function linksRoutes(): Hono<AppBindings> {
     rateLimit("authenticated", { failOpen: false, keySuffix: slugSuffix }),
     async (c) => {
       await deleteLink(c.env.DB, getSlugParam(c), getBearerToken(c));
+      return c.body(null, 204);
+    },
+  );
+
+  // Read-only sharing: owner only. POST creates or replaces the key, DELETE revokes it.
+  routes.post(
+    "/:slug/view-key",
+    rateLimit("authenticated", { failOpen: false, keySuffix: slugSuffix }),
+    async (c) => {
+      const created = await createViewKey(c.env.DB, getSlugParam(c), getBearerToken(c));
+      return c.json(created, 201);
+    },
+  );
+
+  routes.delete(
+    "/:slug/view-key",
+    rateLimit("authenticated", { failOpen: false, keySuffix: slugSuffix }),
+    async (c) => {
+      await revokeViewKey(c.env.DB, getSlugParam(c), getBearerToken(c));
       return c.body(null, 204);
     },
   );

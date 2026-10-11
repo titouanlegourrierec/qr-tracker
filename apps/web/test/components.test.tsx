@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { CopyButton } from "../src/components/CopyButton.js";
+import { FramedNotice } from "../src/components/FramedNotice.js";
+import { isFramed } from "../src/lib/framing.js";
 import { qrSvg } from "../src/lib/qr.js";
 
 describe("CopyButton", () => {
@@ -33,5 +35,29 @@ describe("qrSvg", () => {
     const svg = await qrSvg("https://example.com/r/abc1234");
     expect(svg).toContain("<svg");
     expect(svg).toContain("path");
+  });
+});
+
+describe("framing protection", () => {
+  it("detects frames, including sandboxes that refuse access to the top window", () => {
+    const self = {};
+    expect(isFramed({ self, top: self })).toBe(false);
+    expect(isFramed({ self, top: {} })).toBe(true);
+    const locked = {
+      self,
+      get top(): unknown {
+        throw new DOMException("Blocked a frame", "SecurityError");
+      },
+    };
+    expect(isFramed(locked)).toBe(true);
+    // The test page itself is not framed.
+    expect(isFramed()).toBe(false);
+  });
+
+  it("offers to open the app directly, without the private fragment", () => {
+    render(<FramedNotice />);
+    const link = screen.getByRole("link", { name: "Open QR Tracker" });
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link.getAttribute("href")).not.toContain("#");
   });
 });
