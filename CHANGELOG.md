@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-11
+
 ### Added
 
 - **My QR codes** shows each code's number of scans, its last scan and whether it is
@@ -151,7 +153,8 @@ First public release.
 - CI (format, lint, typecheck, unit/integration tests with coverage, Playwright E2E)
   and a deploy pipeline (D1 migrations → worker → GitHub Pages → production smoke test).
 
-[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/titouanlegourrierec/qr-tracker/releases/tag/v1.0.0
