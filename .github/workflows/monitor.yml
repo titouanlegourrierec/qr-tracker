@@ -1,0 +1,62 @@
+name: Monitor
+
+# Hourly production check. A failed run makes GitHub e-mail the repository owner, as for
+# abuse-reports.yml: the worker, its database or the web app is down, or a free-plan daily
+# quota is close to its limit (docs/DEPLOYMENT.md §12).
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+  # Also runs when this check itself changes, to try it before it reaches main.
+  pull_request:
+    paths:
+      - .github/workflows/monitor.yml
+      - scripts/check-usage.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitor
+  cancel-in-progress: true
+
+jobs:
+  # One job on purpose: while the repository is private, each job costs at least one
+  # Actions minute, every hour.
+  production:
+    # Production is configured through repository variables (absent on forks).
+    if: ${{ vars.VITE_API_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      API_URL: ${{ vars.VITE_API_URL }}
+      # Update with a custom domain (docs/DEPLOYMENT.md §8).
+      SITE_URL: https://titouanlegourrierec.github.io/qr-tracker/
+    steps:
+      - name: Worker answers
+        run: curl --fail --silent --show-error --retry 3 --retry-delay 20 --retry-all-errors "$API_URL/api/health"
+      - name: Database answers (an unknown QR code gets 404, not 503)
+        run: |
+          for attempt in 1 2 3; do
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' "$API_URL/r/zzzzzzz")
+            echo "Attempt $attempt: HTTP $code"
+            if [ "$code" = "404" ]; then exit 0; fi
+            sleep 20
+          done
+          echo "::error::Expected 404 for an unknown QR code. A 503 means D1 is failing (daily quota reached?)."
+          exit 1
+      - name: Web app is served and wired to the worker
+        run: |
+          curl --fail --silent --show-error --retry 3 --retry-delay 20 --retry-all-errors "$SITE_URL" \
+            | grep --quiet --fixed-strings "$API_URL"
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: ".nvmrc"
+      - name: Free-plan daily quotas below 70 %
+        # Secrets are not available to pull requests from forks.
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/check-usage.mjs
