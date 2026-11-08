@@ -5,12 +5,12 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 
 ## Commands
 
-| Command         | What                                                                    |
-| --------------- | ----------------------------------------------------------------------- |
-| `pnpm dev`      | Worker (`wrangler dev`, :8787) + web (`vite`, :5173) in parallel        |
-| `pnpm check`    | format:check → lint → typecheck → tests (must pass before every commit) |
-| `pnpm test:e2e` | Playwright (boots worker with fresh D1 + builds/serves SPA on :4173)    |
-| `pnpm build`    | Build all packages                                                      |
+| Command         | What                                                                         |
+| --------------- | ---------------------------------------------------------------------------- |
+| `pnpm dev`      | Worker (`wrangler dev`, :8787) + web (`vite`, :5173) in parallel             |
+| `pnpm check`    | format → lint → typecheck → licenses → tests (must pass before every commit) |
+| `pnpm test:e2e` | Playwright (boots worker with fresh D1 + builds/serves SPA on :4173)         |
+| `pnpm build`    | Build all packages                                                           |
 
 ## Conventions
 
@@ -37,8 +37,9 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
 
 - **TypeScript is pinned to 6.0.x**: typescript-eslint peer range is `>=4.8.4 <6.1.0`
   (TS 7 = Go rewrite, unsupported). Don't bump TS without checking typescript-eslint.
-- **Vitest is pinned to 4.1.11 exactly**: `@cloudflare/vitest-plugin` requires `^4.1.0`
-  and `@vitest/coverage-istanbul` pins its peer exactly. Don't bump to Vitest 5.
+- **Vitest stays on 4.1.x, pinned exactly** (4.1.12 now): `@cloudflare/vitest-plugin`
+  requires `^4.1.0` and `@vitest/coverage-istanbul` pins its peer exactly, so both move
+  together (Dependabot groups them). Don't bump to Vitest 5.
 - Coverage in workerd only works with the **istanbul** provider (no native V8 coverage).
 - `ua-parser-js` must stay on **v1.x** (MIT); v2 is AGPL and prohibited.
 - Privacy invariants: never store or log raw IPs, full user-agent strings, or any
@@ -65,6 +66,11 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
   0004); it stays only for SPA bundles cached from earlier releases — remove it later.
 - react-hooks v7 lint (React Compiler rules): no synchronous setState inside effects, no
   property access on hook-returned objects holding refs during render (destructure them).
+- E2E runs 3 Playwright projects (desktop Chrome, mobile Safari, mobile Chrome) against one
+  local worker, so `playwright.config.ts` starts it with `--var RATE_LIMIT_MULTIPLIER:10`
+  (all browsers share one IP). Production keeps `RATE_LIMIT_MULTIPLIER` at 1.
+- `pnpm check` includes `scripts/check-licenses.mjs`: a new dependency under an unlisted
+  license fails it. Never add AGPL/GPL; extend the allowlist only with a stated reason.
 - If an E2E run is interrupted, orphaned servers can block ports 8787/4173. Clean with:
   `pkill -f "wrangler.js dev"; pkill -f workerd; lsof -ti :4173 | xargs kill -9`
   (a plain `pkill -f "wrangler dev"` does NOT match the real command line).

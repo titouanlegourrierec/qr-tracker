@@ -50,10 +50,11 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · decisions: [docs/adr/](
 
 TypeScript strict everywhere · pnpm workspaces · **Worker**: Hono, D1 + Wrangler
 migrations, Zod · **Web**: Vite 8, React 19, React Router (hash), Chart.js (lazy),
-`qrcode` · **Shared**: Zod schemas as the single API contract · **Tests**: Vitest 4
+SVG world map (d3-geo + topojson, lazy), `qrcode` · **Shared**: Zod schemas as the single API contract · **Tests**: Vitest 4
 (`@cloudflare/vitest-plugin` in the real Workers runtime, Testing Library + MSW, istanbul
-coverage thresholds 90/90/80), Playwright E2E · ESLint 10 (type-checked) + Prettier ·
-husky, lint-staged, commitlint · Dependabot.
+coverage thresholds 90/90/80), Playwright E2E on desktop Chrome, mobile Safari and mobile
+Chrome · ESLint 10 (type-checked) + Prettier · husky, lint-staged, commitlint · license
+gate · Dependabot · hourly production monitor with quota alerts.
 
 ## Local development
 
@@ -70,14 +71,15 @@ call the API — creation works immediately.
 
 ## Scripts
 
-| Command                                                      | Description                                                                 |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `pnpm dev`                                                   | Worker + web app in parallel                                                |
-| `pnpm check`                                                 | Format check, lint, typecheck, unit & integration tests (coverage enforced) |
-| `pnpm test:e2e`                                              | Playwright end-to-end suite (real worker + built SPA)                       |
-| `pnpm build`                                                 | Build all packages                                                          |
-| `pnpm format` / `pnpm lint` / `pnpm typecheck` / `pnpm test` | Individual steps                                                            |
-| `node scripts/admin.mjs disable <slug>`                      | Admin kill switch (needs `ADMIN_TOKEN`)                                     |
+| Command                                                      | Description                                                       |
+| ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `pnpm dev`                                                   | Worker + web app in parallel                                      |
+| `pnpm check`                                                 | Format check, lint, typecheck, licenses, unit & integration tests |
+| `pnpm test:e2e`                                              | Playwright end-to-end suite (real worker + built SPA)             |
+| `pnpm build`                                                 | Build all packages                                                |
+| `pnpm format` / `pnpm lint` / `pnpm typecheck` / `pnpm test` | Individual steps                                                  |
+| `node scripts/admin.mjs disable <slug>`                      | Admin kill switch (needs `ADMIN_TOKEN`)                           |
+| `pnpm licenses:check`                                        | Dependency license gate (also part of `pnpm check`)               |
 
 ## Project structure
 
@@ -88,7 +90,7 @@ apps/web/          React SPA, i18n/en.ts, components/, pages/, MSW tests
 packages/shared/   Zod schemas + types + constants — the single API contract
 e2e/               Playwright suite (create → scan → stats → edit → delete)
 docs/              PLAN, ARCHITECTURE, DEPLOYMENT, ADRs, user guide
-scripts/           admin.mjs (kill switch CLI)
+scripts/           admin.mjs (kill switch CLI), check-licenses.mjs, check-usage.mjs
 ```
 
 ## Documentation
@@ -96,7 +98,8 @@ scripts/           admin.mjs (kill switch CLI)
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — step-by-step deployment from scratch
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) & [docs/adr/](docs/adr/)
 - [docs/user-guide.md](docs/user-guide.md) — user guide
-- [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md) ·
+  [SECURITY.md](SECURITY.md) (reporting a vulnerability)
 
 ## License
 

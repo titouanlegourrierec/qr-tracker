@@ -42,6 +42,8 @@ The command prints a `database_id` (a UUID). **Copy it into
 2. Permissions:
    - **Account → Workers Scripts → Edit**
    - **Account → D1 → Edit**
+   - **Account → Account Analytics → Read** — read-only; lets the hourly _Monitor_
+     workflow warn you before a free-plan quota runs out (§12).
 3. Account Resources: include → your account. Keep everything else at defaults.
 4. Create and copy the token (shown once).
 
@@ -212,6 +214,63 @@ gh secret set ADMIN_TOKEN   # the same value as the worker's ADMIN_TOKEN secret
 It reads the worker URL from the `VITE_API_URL` repository variable (§6). Without the
 secret, the job succeeds with a notice and checks nothing.
 
+## 12. Monitoring and alerts
+
+The _Monitor_ workflow (`.github/workflows/monitor.yml`) runs every hour. When something is
+wrong the run fails, and GitHub e-mails you about it (as for abuse reports). It checks:
+
+- the worker answers (`/api/health`);
+- the database answers: an unknown QR code must get the 404 page. A 503 means D1 is
+  failing, usually because a daily quota is exhausted;
+- the web app is served and points to the worker;
+- **the free plan's daily quotas** (account-wide, reset at 00:00 UTC): the run fails once
+  Worker requests, D1 rows read or D1 rows written pass **70 %** of their limit, while there
+  is still time to react (§10: custom domain + WAF rule, or Workers Paid). Today's figures
+  are shown in each run's summary.
+
+The quota check reads the Cloudflare GraphQL Analytics API with the `CLOUDFLARE_API_TOKEN`
+secret, which needs **Account → Account Analytics → Read** (§4). Without it, the step
+only prints a warning ("Cloudflare usage is not readable") and the uptime checks still
+run. To add it: Dashboard → My profile → API Tokens → the token → _Edit_ → add the
+permission → _Continue to summary_ → _Update token_. The secret keeps the same value.
+
+Run it by hand with `gh workflow run monitor.yml`. While the repository is private, each
+hourly run costs about one minute of the 2,000 free Actions minutes per month (about 720 a
+month); public repositories do not pay for Actions minutes. GitHub's scheduler can start
+runs late, and it pauses scheduled workflows after 60 days without commits: re-enable it
+from the Actions tab if that happens. For alerts within minutes, add an external uptime
+service (e.g. UptimeRobot's free plan) watching
+`https://qr-tracker.<your-subdomain>.workers.dev/r/zzzzzzz` for a 404.
+
+## 13. Backups and restore
+
+**D1 Time Travel** keeps the database's history without any setup: the last **7 days** on
+the free plan (30 days on Workers Paid), restorable to any minute.
+
+```bash
+cd apps/worker
+# Where would a restore go? (prints the bookmark for that moment)
+pnpm exec wrangler d1 time-travel info qr-tracker-db --timestamp=2026-11-01T12:00:00Z
+# Restore the whole database to that moment
+pnpm exec wrangler d1 time-travel restore qr-tracker-db --timestamp=2026-11-01T12:00:00Z
+```
+
+A restore **replaces the whole database**: links created and scans recorded after that
+moment are lost. It prints a bookmark of the state just before the restore; run
+`time-travel restore … --bookmark=<that bookmark>` to undo it. Restoring does not touch
+the worker's code: if a release changed the schema since that moment, roll the worker
+back too (§9).
+
+**Off-site copy**, e.g. before a risky migration:
+
+```bash
+pnpm exec wrangler d1 export qr-tracker-db --remote --output=backup-$(date +%F).sql
+```
+
+The file holds the key hashes, every destination and the abuse reports' free text: keep it
+private, outside the repository (never commit it). To load it into a new, empty database:
+`wrangler d1 execute <database> --remote --file=backup-….sql`.
+
 ## Troubleshooting
 
 | Symptom                                    | Fix                                                                                                 |
@@ -221,3 +280,4 @@ secret, the job succeeds with a notice and checks nothing.
 | Turnstile widget shows an error            | Site key/domain mismatch: the widget's domain list must include `titouanlegourrierec.github.io`     |
 | Creation always returns TURNSTILE_FAILED   | `TURNSTILE_SECRET_KEY` secret not set on the worker, or site/secret keys are from different widgets |
 | 403 on admin CLI                           | `ADMIN_TOKEN` secret differs from the one you pass to the script                                    |
+| Monitor warns "usage is not readable"      | Add **Account Analytics → Read** to the Cloudflare API token (§4, §12)                              |

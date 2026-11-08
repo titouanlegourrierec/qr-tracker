@@ -88,8 +88,9 @@ choice, lifting it restores that choice, and owner updates run
 Vite + React SPA with **hash routing**: deep links work on GitHub Pages without redirect
 hacks, and the secret key can live in the URL fragment (`#/stats/:slug/:key`) — the
 fragment is never sent to any server. The API contract (Zod schemas in
-`packages/shared`) validates every response. Chart.js is lazy-loaded on the stats route
-only, and every chart has a `<table>` alternative (WCAG 2.1 AA).
+`packages/shared`) validates every response. Chart.js and the world map (an SVG drawn with
+d3-geo + topojson-client from world-atlas) are lazy-loaded on the stats route only, and
+every chart has a `<table>` alternative (WCAG 2.1 AA).
 
 ## Known limitations
 
