@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit && pnpm --recursive typecheck",
     "test": "pnpm --recursive test",
     "test:e2e": "playwright test",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm licenses:check && pnpm test",
+    "licenses:check": "node scripts/check-licenses.mjs",
     "prelint": "pnpm --filter @qr-tracker/worker run cf-typegen"
   },
   "devDependencies": {

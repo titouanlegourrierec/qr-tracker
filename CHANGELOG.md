@@ -6,6 +6,28 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Hourly **Monitor** workflow: checks the worker, its database and the web app, and fails
+  (GitHub e-mails the owner) once a free-plan daily quota passes 70 % — Worker requests,
+  D1 rows read or written (`scripts/check-usage.mjs`, docs/DEPLOYMENT.md §12).
+- **License gate** in `pnpm check` (`scripts/check-licenses.mjs`): shipped code must be
+  permissively licensed, AGPL/GPL are refused everywhere.
+- End-to-end tests also run on **mobile Safari (WebKit)** and **mobile Chrome**.
+- `SECURITY.md`: how to report a vulnerability privately.
+- docs/DEPLOYMENT.md §13: backups and restore with D1 Time Travel and `wrangler d1 export`.
+
+### Changed
+
+- New `RATE_LIMIT_MULTIPLIER` worker variable (1 in production): the E2E run raises it
+  because all its browsers share one local IP.
+- Dependencies: Vitest 4.1.12, Playwright 1.64, wrangler 4.156, React 19.3.1, React
+  Router 8.5 and other minor and patch updates; GitHub Actions `setup-node` 7.1.
+
+### Removed
+
+- The unused `app.close` UI string.
+
 ## [1.3.0] - 2026-10-11
 
 ### Added

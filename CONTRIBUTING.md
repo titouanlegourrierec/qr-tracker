@@ -18,12 +18,12 @@ API, which production does not allow) are appended to an existing `.dev.vars` on
 
 ## Commands
 
-| Command                     | What                                                               |
-| --------------------------- | ------------------------------------------------------------------ |
-| `pnpm check`                | format check → lint → typecheck → all unit/integration tests       |
-| `pnpm test:e2e`             | Playwright end-to-end suite (builds the web app, boots the worker) |
-| `pnpm format` / `pnpm lint` | Prettier / ESLint (flat config, type-checked)                      |
-| `pnpm build`                | Build all packages                                                 |
+| Command                     | What                                                                |
+| --------------------------- | ------------------------------------------------------------------- |
+| `pnpm check`                | format check → lint → typecheck → licenses → unit/integration tests |
+| `pnpm test:e2e`             | Playwright end-to-end suite (builds the web app, boots the worker)  |
+| `pnpm format` / `pnpm lint` | Prettier / ESLint (flat config, type-checked)                       |
+| `pnpm build`                | Build all packages                                                  |
 
 ## Rules
 
@@ -38,6 +38,11 @@ API, which production does not allow) are appended to an existing `.dev.vars` on
   language can be added later). Code, comments, commits and docs are English.
 - Privacy invariants (never store/log raw IPs, full user-agents, or any persistent
   identifier) are non-negotiable — see `docs/adr/0003-privacy-visitor-hashing.md`.
+- Dependency licenses are checked by `pnpm check` (`scripts/check-licenses.mjs`): code
+  shipped to visitors or run by the worker must be permissively licensed; AGPL/GPL are
+  never accepted. A new license is added there, with the reason, in the same PR.
+- `pnpm test:e2e` runs every scenario on desktop Chrome, mobile Safari (WebKit) and mobile
+  Chrome. Install the browsers once with `pnpm exec playwright install chromium webkit`.
 
 ## Dependency updates
 

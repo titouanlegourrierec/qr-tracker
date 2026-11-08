@@ -38,6 +38,9 @@
     // Destination check against Google Safe Browsing on create/edit. Only active once the
     // SAFE_BROWSING_API_KEY secret is set (docs/DEPLOYMENT.md §11); "false" turns it off.
     "URL_REPUTATION_ENABLED": "true",
+    // Multiplies every limit in RATE_LIMITS (@qr-tracker/shared). Keep 1 in production;
+    // the E2E run raises it (playwright.config.ts): all its browsers share one local IP.
+    "RATE_LIMIT_MULTIPLIER": "1",
   },
   // Secrets (wrangler secret put / .dev.vars): TURNSTILE_SECRET_KEY, ADMIN_TOKEN,
   // optional SAFE_BROWSING_API_KEY
