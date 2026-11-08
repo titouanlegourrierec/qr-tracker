@@ -27,7 +27,6 @@ export const en = {
     framed:
       "For your security, QR Tracker only works when opened directly, not inside another website.",
     openDirectly: "Open QR Tracker",
-    close: "Close",
   },
   errors: {
     VALIDATION_ERROR: "The submitted information is invalid.",
