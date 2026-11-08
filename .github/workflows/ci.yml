@@ -38,7 +38,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium webkit
       - name: End-to-end tests (local worker + built SPA)
         run: pnpm test:e2e
       - uses: actions/upload-artifact@v7.0.2

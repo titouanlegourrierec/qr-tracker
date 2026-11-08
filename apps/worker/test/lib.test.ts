@@ -9,7 +9,12 @@ import {
   timingSafeEqualHex,
 } from "../src/lib/crypto.js";
 import { LinkCache } from "../src/lib/link-cache.js";
-import { isOverLimit, rateLimitKey, windowStart } from "../src/lib/rate-limit.js";
+import {
+  isOverLimit,
+  parseRateLimitMultiplier,
+  rateLimitKey,
+  windowStart,
+} from "../src/lib/rate-limit.js";
 import { verifyTurnstile } from "../src/lib/turnstile.js";
 import { checkUrlReputation } from "../src/lib/url-reputation.js";
 
@@ -77,6 +82,14 @@ describe("rate-limit window math", () => {
   it("is over limit strictly above the limit", () => {
     expect(isOverLimit(10, 10)).toBe(false);
     expect(isOverLimit(11, 10)).toBe(true);
+  });
+
+  it("parses the limit multiplier, falling back to 1", () => {
+    expect(parseRateLimitMultiplier("10")).toBe(10);
+    expect(parseRateLimitMultiplier("1")).toBe(1);
+    for (const raw of [undefined, "", "0", "-3", "1.5", "lots"]) {
+      expect(parseRateLimitMultiplier(raw)).toBe(1);
+    }
   });
 });
 

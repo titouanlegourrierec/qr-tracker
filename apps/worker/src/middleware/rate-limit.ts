@@ -6,7 +6,12 @@ import type { AppBindings } from "../app.js";
 import { ApiError } from "../lib/api-error.js";
 import { sha256Hex } from "../lib/crypto.js";
 import { logError } from "../lib/log.js";
-import { isOverLimit, rateLimitKey, windowStart } from "../lib/rate-limit.js";
+import {
+  isOverLimit,
+  parseRateLimitMultiplier,
+  rateLimitKey,
+  windowStart,
+} from "../lib/rate-limit.js";
 import { incrementRateLimit } from "../repositories/rate-limits.js";
 import { getOrCreateDailySalt } from "../repositories/salts.js";
 
@@ -41,7 +46,8 @@ export function rateLimit(
         key,
         windowStart(Date.now(), config.windowSeconds),
       );
-      if (isOverLimit(count, config.limit)) {
+      const limit = config.limit * parseRateLimitMultiplier(c.env.RATE_LIMIT_MULTIPLIER);
+      if (isOverLimit(count, limit)) {
         throw new ApiError("RATE_LIMITED", "Too many requests, retry later");
       }
     } catch (error) {

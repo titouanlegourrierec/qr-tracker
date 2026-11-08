@@ -10,6 +10,12 @@ export function rateLimitKey(scope: string, identifierHash: string, suffix?: str
     : `${scope}:${identifierHash}:${suffix}`;
 }
 
+/** Parses env.RATE_LIMIT_MULTIPLIER: a whole number ≥ 1, else 1 (the configured limits). */
+export function parseRateLimitMultiplier(raw: string | undefined): number {
+  const parsed = raw === undefined ? Number.NaN : Number(raw);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
+}
+
 export function isOverLimit(count: number, limit: number): boolean {
   return count > limit;
 }
