@@ -122,7 +122,7 @@ Retention: cron purges scans older than `RETENTION_DAYS` (env var, default 365).
 
 ## 3. API contract
 
-Base: `https://<worker>.workers.dev`. All bodies validated by shared Zod schemas. Errors are always `{ "error": { "code": string, "message": string } }` with codes like `VALIDATION_ERROR`, `TURNSTILE_FAILED`, `NOT_FOUND`, `UNAUTHORIZED`, `RATE_LIMITED`, `LINK_DISABLED`, `INTERNAL`.
+Base: `https://<worker>.workers.dev`. All bodies validated by shared Zod schemas, after a 32 KiB size cap (`PAYLOAD_TOO_LARGE`, 413). Errors are always `{ "error": { "code": string, "message": string } }` with codes like `VALIDATION_ERROR`, `TURNSTILE_FAILED`, `NOT_FOUND`, `UNAUTHORIZED`, `RATE_LIMITED`, `PAYLOAD_TOO_LARGE`, `LINK_DISABLED`, `INTERNAL`.
 
 | Method & path                                       | Auth                          | Purpose                                                  |
 | --------------------------------------------------- | ----------------------------- | -------------------------------------------------------- |

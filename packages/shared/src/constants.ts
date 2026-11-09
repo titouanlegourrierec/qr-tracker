@@ -53,6 +53,9 @@ export const RATE_LIMITS = {
 /** Free-text details a reporter may add to an abuse report. */
 export const MAX_REPORT_DETAILS_LENGTH = 1000;
 
+/** Bound on the Turnstile token sent with a creation or a report (Cloudflare's are ≤ 2048). */
+export const MAX_TURNSTILE_TOKEN_LENGTH = 4096;
+
 export type RateLimitScope = keyof typeof RATE_LIMITS;
 
 /** Column order of the CSV export (matches the anonymous scan rows). */

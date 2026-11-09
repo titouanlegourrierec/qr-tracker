@@ -62,6 +62,9 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
   endpoint to `authorizeLinkRead`.
 - Production `ALLOWED_ORIGINS` (`wrangler.jsonc`) has no localhost: local origins live in
   `.dev.vars` (appended by `scripts/ensure-dev-vars.mjs`) and in `vitest.config.ts` bindings.
+- API request bodies are capped at 32 KiB (`lib/body-limit.ts`, derived from the schema
+  limits; 413 `PAYLOAD_TOO_LARGE`). A new JSON endpoint or request field goes into
+  `MAX_BODY_BYTES_BY_REQUEST`, with its worst case in `test/body-limit-lib.test.ts`.
 - `statsResponse.topIsps` is deprecated and always `[]` (ISPs dropped in 1.3.0, migration
   0004); it stays only for SPA bundles cached from earlier releases — remove it later.
 - react-hooks v7 lint (React Compiler rules): no synchronous setState inside effects, no

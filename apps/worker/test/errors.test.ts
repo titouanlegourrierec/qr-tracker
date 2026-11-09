@@ -52,6 +52,7 @@ describe("error handling", () => {
     expect(new ApiError("TURNSTILE_FAILED", "x").status).toBe(403);
     expect(new ApiError("UNAUTHORIZED", "x").status).toBe(401);
     expect(new ApiError("NOT_FOUND", "x").status).toBe(404);
+    expect(new ApiError("PAYLOAD_TOO_LARGE", "x").status).toBe(413);
     expect(new ApiError("INTERNAL", "x").status).toBe(500);
   });
 });

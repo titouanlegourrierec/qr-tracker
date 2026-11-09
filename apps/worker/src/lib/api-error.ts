@@ -10,6 +10,7 @@ const STATUS_BY_CODE: Record<ErrorCode, ContentfulStatusCode> = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   RATE_LIMITED: 429,
+  PAYLOAD_TOO_LARGE: 413,
   INTERNAL: 500,
 };
 

@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- The worker refuses API request bodies over 32 KiB with `413 PAYLOAD_TOO_LARGE` before
+  parsing them. Until now any body up to the Cloudflare limit (100 MB on the free plan, in a
+  128 MB isolate) was read and parsed in full before the schemas' length limits ran. The cap
+  is derived from the shared schema limits (`apps/worker/src/lib/body-limit.ts`): the
+  largest valid request, a new link with every field at its maximum length, is ≈ 18.8 KB.
+  An oversized `Content-Length` is refused before the rate limiter and without reading the
+  body; a body sent without one is read up to the cap at most.
+
 ## [1.4.0] - 2026-11-09
 
 ### Added
