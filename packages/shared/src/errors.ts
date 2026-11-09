@@ -8,6 +8,7 @@ export const ERROR_CODES = [
   "FORBIDDEN",
   "NOT_FOUND",
   "RATE_LIMITED",
+  "PAYLOAD_TOO_LARGE",
   "INTERNAL",
 ] as const;
 

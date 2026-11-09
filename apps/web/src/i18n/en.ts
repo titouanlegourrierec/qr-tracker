@@ -36,6 +36,7 @@ export const en = {
     FORBIDDEN: "This link has been blocked by the administrator.",
     NOT_FOUND: "This link does not exist (or has been deleted).",
     RATE_LIMITED: "Too many requests. Wait a moment and try again.",
+    PAYLOAD_TOO_LARGE: "The submitted information is too large.",
     INTERNAL: "Server error. Please try again later.",
     NETWORK: "Could not reach the server. Check your connection.",
   },

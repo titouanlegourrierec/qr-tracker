@@ -5,6 +5,7 @@ import {
   MAX_LABEL_LENGTH,
   MAX_REPORT_DETAILS_LENGTH,
   MAX_TARGET_URL_LENGTH,
+  MAX_TURNSTILE_TOKEN_LENGTH,
   QUERY_DATE_MAX,
   QUERY_DATE_MIN,
   SUMMARY_MAX_LINKS,
@@ -50,7 +51,7 @@ export const createLinkRequestSchema = z.object({
   // validateTargetUrl so the API can answer with the dedicated TARGET_URL_INVALID code.
   targetUrl: targetUrlFieldSchema,
   label: labelFieldSchema.optional(),
-  turnstileToken: z.string().min(1).max(4096),
+  turnstileToken: z.string().min(1).max(MAX_TURNSTILE_TOKEN_LENGTH),
 });
 export type CreateLinkRequest = z.infer<typeof createLinkRequestSchema>;
 
@@ -104,7 +105,7 @@ export const createReportRequestSchema = z.object({
   slug: slugSchema,
   reason: reportReasonSchema,
   details: z.string().trim().max(MAX_REPORT_DETAILS_LENGTH).optional(),
-  turnstileToken: z.string().min(1).max(4096),
+  turnstileToken: z.string().min(1).max(MAX_TURNSTILE_TOKEN_LENGTH),
 });
 export type CreateReportRequest = z.infer<typeof createReportRequestSchema>;
 

@@ -79,9 +79,15 @@ choice, lifting it restores that choice, and owner updates run
 - `services/` — business logic (links, scans, stats, cron).
 - `repositories/` — the only modules that touch D1 (SQL lives here).
 - `lib/` — pure functions (crypto, URL validation, UA parsing, bot detection, timezone
-  bucketing, CSV, rate-limit math), each unit-tested.
-- `middleware/` — CORS allowlist, security headers, D1-backed rate limiter
-  (fail-closed on writes, fail-open on reads).
+  bucketing, CSV, rate-limit math, request-size bounds), each unit-tested.
+- `middleware/` — security headers, CORS allowlist, request body cap, D1-backed rate
+  limiter (fail-closed on writes, fail-open on reads). On `/api/*` they run in that order,
+  the rate limiter per route. The body cap (`lib/body-limit.ts`) is 32 KiB: the largest
+  valid request — a new link with every field at its maximum length, ≈ 18.8 KB of JSON —
+  rounded up to a power of two, derived from the shared schema limits. Larger bodies get
+  413 `PAYLOAD_TOO_LARGE` before `JSON.parse` or Zod see them: a declared `Content-Length`
+  is refused from the header alone, before the rate limiter spends a D1 write; a body
+  without one is read up to the cap at most.
 
 ## Frontend
 

@@ -3,6 +3,7 @@ import { Hono } from "hono";
 
 import { ApiError } from "./lib/api-error.js";
 import { logError } from "./lib/log.js";
+import { requestBodyLimit } from "./middleware/body-limit.js";
 import { corsMiddleware } from "./middleware/cors.js";
 import { securityHeaders } from "./middleware/security-headers.js";
 import { adminRoutes } from "./routes/admin.js";
@@ -19,6 +20,10 @@ export function createApp(): Hono<AppBindings> {
 
   app.use(securityHeaders());
   app.use("/api/*", corsMiddleware());
+  // After CORS (preflights stop there and 413s still carry CORS headers), before every
+  // route's rate limiter: an oversized Content-Length is refused from the header alone,
+  // without reading the body or spending a D1 write on the limiter.
+  app.use("/api/*", requestBodyLimit());
 
   // People who only know the short-link domain (e.g. from a QR code that led to a
   // scam) land on the web app, where they can find out who runs it and report the code.
