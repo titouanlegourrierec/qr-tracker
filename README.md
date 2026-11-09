@@ -32,8 +32,8 @@ free tiers only.
 
 ## Features
 
-- **Create** a QR code for any public http(s) link, as a print-ready PNG or an SVG. The
-  secret key, shown once, is its only credential.
+- **Create** a QR code for any public http(s) link, as a print-ready PNG or an SVG, behind
+  a Cloudflare Turnstile check. The secret key, shown once, is its only credential.
 - **Statistics**: scans and visitors over time, by hour and day of week, on a world map, and
   by country, city, device, operating system, browser and language. Date ranges in your
   time zone, bots and link previews left out, CSV export.

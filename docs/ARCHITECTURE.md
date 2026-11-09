@@ -182,8 +182,8 @@ is a `<meta>` tag.
   tier's traffic this is not a bottleneck.
 - The CSV export stops at 50,000 rows per request.
 - GitHub Pages cannot send `frame-ancestors`/`X-Frame-Options`: against clickjacking, the
-  SPA refuses to render inside a frame (`lib/framing.ts`) and links to itself instead. A
-  real header needs other hosting (e.g. Cloudflare Pages with `_headers`).
+  SPA refuses to render inside a frame (`lib/framing.ts`) and shows a link to open it
+  directly. A real header needs other hosting (e.g. Cloudflare Pages with `_headers`).
 - The private-host filter reads the URL only: a public name that resolves to a private
   address (e.g. `127.0.0.1.nip.io`) passes. Harmless here, since the worker never fetches
   destinations, it only redirects browsers.
