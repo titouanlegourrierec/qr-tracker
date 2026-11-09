@@ -1,7 +1,9 @@
 # CLAUDE.md
 
 QR code generator with anonymous scan analytics. pnpm monorepo: static React SPA on GitHub
-Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.md`.
+Pages + Cloudflare Worker (Hono + D1) on the free tier. Design: `docs/ARCHITECTURE.md`;
+setup and tests: `docs/development.md`; operations: `docs/DEPLOYMENT.md` (`docs/README.md`
+indexes them; `docs/PLAN.md` is the historical pre-implementation plan).
 
 ## Commands
 
@@ -61,7 +63,8 @@ Pages + Cloudflare Worker (Hono + D1) on the free tier. Full design: `docs/PLAN.
   changes the link or its keys uses `authorizeLink` (secret key only). Never widen a write
   endpoint to `authorizeLinkRead`.
 - Production `ALLOWED_ORIGINS` (`wrangler.jsonc`) has no localhost: local origins live in
-  `.dev.vars` (appended by `scripts/ensure-dev-vars.mjs`) and in `vitest.config.ts` bindings.
+  `.dev.vars` (appended by `apps/worker/scripts/ensure-dev-vars.mjs`) and in
+  `vitest.config.ts` bindings.
 - API request bodies are capped at 32 KiB (`lib/body-limit.ts`, derived from the schema
   limits; 413 `PAYLOAD_TOO_LARGE`). A new JSON endpoint or request field goes into
   `MAX_BODY_BYTES_BY_REQUEST`, with its worst case in `test/body-limit-lib.test.ts`.
