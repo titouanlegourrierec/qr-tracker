@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-09
+
 ### Added
 
 - Hourly **Monitor** workflow: checks the worker, its database and the web app, and fails
@@ -27,6 +29,13 @@ All notable changes to this project are documented here. The format follows
 ### Removed
 
 - The unused `app.close` UI string.
+
+### Security
+
+- zod 4.6.7 everywhere (GHSA-mrhx-c7xc-m3w5: memory exhaustion while validating oversized
+  constrained collections). The worker and the web app have run 4.6.7 in production since
+  the 2026-11-08 dependency update; the last affected copy, used only by lint tooling, is
+  gone from the lockfile.
 
 ## [1.3.0] - 2026-10-11
 
@@ -175,7 +184,8 @@ First public release.
 - CI (format, lint, typecheck, unit/integration tests with coverage, Playwright E2E)
   and a deploy pipeline (D1 migrations → worker → GitHub Pages → production smoke test).
 
-[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.0.0...v1.1.0

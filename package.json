@@ -1,6 +1,6 @@
 {
   "name": "qr-tracker",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "description": "QR code generator with anonymous scan analytics — GitHub Pages + Cloudflare Workers",
   "license": "MIT",
