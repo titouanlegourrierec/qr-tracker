@@ -1,7 +1,12 @@
 # PLAN — QR code generator with scan analytics
 
-Status: **awaiting approval** — no implementation before sign-off.
-Date: 2026-09-28. All version and platform facts below were verified against official docs on this date.
+> **Historical record.** The plan approved on 2026-09-28, before the first line of code, kept
+> for the reasoning behind the design. It is not maintained: the API, the schema and several
+> decisions have changed since. The current design is in [ARCHITECTURE.md](ARCHITECTURE.md),
+> later decisions are in [adr/](adr/), and what shipped when is in
+> [CHANGELOG.md](../CHANGELOG.md).
+
+Version and platform facts below were verified against official docs on 2026-09-28.
 
 ---
 
@@ -193,22 +198,12 @@ Test-first for all `lib/` logic. `pnpm check` = format check → lint → typech
 
 ## 6. Milestones
 
-Each milestone ends with `pnpm check` green + one Conventional Commit.
-
-| #   | Milestone           | Content                                                                                                                                                                                                                                                                                                                                                |
-| --- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| M0  | Scaffolding         | pnpm workspaces, base tsconfig (`strict` + the 4 extra flags), ESLint flat (ts-eslint strict-type-checked, react-hooks, import order), Prettier, husky + lint-staged + commitlint, `.nvmrc` (Node 24 LTS), `engines`, `packageManager`, `.editorconfig`, Dependabot (weekly, grouped), CI skeleton, root scripts (`vitest --passWithNoTests` until M1) |
-| M1  | `packages/shared`   | Zod schemas for every API body/response, error codes, constants; unit tests                                                                                                                                                                                                                                                                            |
-| M2  | Worker foundation   | Hono app, `wrangler.jsonc`, D1 migrations, security headers + CORS + error middleware, `/api/health`, vitest-plugin wired with migrations in tests, `.dev.vars.example` (dummy Turnstile keys)                                                                                                                                                         |
-| M3  | Links CRUD + auth   | Slug/key generation, Turnstile verify, `POST /api/links`, Bearer-key middleware (constant-time), `GET/PATCH/DELETE /api/links/:slug`, D1 rate limiter                                                                                                                                                                                                  |
-| M4  | Redirect + tracking | `GET /r/:slug`, `waitUntil` recording, UA parsing + bot detection + fixtures, visitor hash + salts, error pages; CPU sanity check in `wrangler dev`                                                                                                                                                                                                    |
-| M5  | Stats + CSV         | Aggregation SQL + indexes, tz mapping, `GET …/stats`, `GET …/export`                                                                                                                                                                                                                                                                                   |
-| M6  | Cron + admin        | `scheduled` handler (salt rotation, scan purge, rate-limit cleanup), admin kill-switch endpoint + `scripts/admin.ts` CLI                                                                                                                                                                                                                               |
-| M7  | Web foundation      | Vite + React + HashRouter, `en.ts` strings, mobile-first layout, dark mode, CSP meta, privacy page, API client                                                                                                                                                                                                                                         |
-| M8  | Web create flow     | Turnstile widget, QR preview + PNG/SVG download, copy buttons, key-shown-once UI, private-link display, "My QR codes" (localStorage + JSON export/import)                                                                                                                                                                                              |
-| M9  | Web stats dashboard | Lazy Chart.js, all charts + accessible tables, date range, bot toggle, CSV download, manage panel (edit/disable/delete)                                                                                                                                                                                                                                |
-| M10 | E2E + hardening     | Playwright suite, coverage thresholds enforced, a11y pass                                                                                                                                                                                                                                                                                              |
-| M11 | CI/CD + docs        | `ci.yml`, `deploy.yml` (migrations → worker → Pages, pinned actions, least-privilege perms), README (Mermaid diagram), DEPLOYMENT.md, ARCHITECTURE.md + 3 ADRs, user-guide.md, CONTRIBUTING, CHANGELOG, CLAUDE.md finalized                                                                                                                            |
+Each milestone ended with `pnpm check` green and one Conventional Commit: M0 scaffolding
+(workspaces, strict tsconfig, ESLint, Prettier, husky, commitlint, Dependabot, CI skeleton) ·
+M1 `packages/shared` · M2 worker foundation (Hono, D1 migrations, headers, CORS, health) ·
+M3 links CRUD, keys, Turnstile, rate limiter · M4 redirect and tracking · M5 stats and CSV ·
+M6 cron and admin kill switch · M7 web foundation · M8 create flow and "My QR codes" ·
+M9 stats dashboard · M10 E2E, coverage thresholds, a11y pass · M11 CI/CD and docs.
 
 ---
 
@@ -223,8 +218,3 @@ Each milestone ends with `pnpm check` green + one Conventional Commit.
 7. **Node 24 LTS** pinned (current active LTS; Node 26 not LTS until Oct 2026). Note: Node ≥ 25 no longer bundles Corepack, and this machine runs Node 26 without pnpm — local setup = `nvm use && corepack enable` (Node 24 bundles Corepack) with `npm i -g pnpm` as fallback; CI uses `pnpm/action-setup`.
 8. **Zod 4** with `exactOptionalPropertyTypes`: watched gotcha — `.optional()` shapes will be typed/tested carefully.
 9. **Malicious-URL reputation check**: feature-flagged stub (`URL_REPUTATION_ENABLED=false` default) with a documented adapter interface; Google Safe Browsing v4 free tier noted as candidate in an ADR, not wired by default (API key + ToS burden on a lab tool).
-
-## 8. Open questions for you
-
-1. **License** — MIT suggested. Confirm?
-2. **Plan approval** — any changes before I start M0?

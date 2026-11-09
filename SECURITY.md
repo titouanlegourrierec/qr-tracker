@@ -24,7 +24,7 @@ Out of scope:
 - a QR code that leads to phishing, malware or other harmful content: use the site's
   **Report abuse** page — such links are blocked for everyone;
 - floods that exhaust the Cloudflare free plan's daily quotas: a known, documented
-  limitation (docs/DEPLOYMENT.md §10);
+  limitation ([docs/DEPLOYMENT.md §10](docs/DEPLOYMENT.md#10-protecting-the-redirect-from-floods));
 - findings that need an already compromised device or browser.
 
 ## Supported versions
@@ -35,6 +35,6 @@ Only the latest release, deployed from `main`, is maintained.
 
 - Secret and read-only keys are 256-bit random values. Only their SHA-256 hashes are
   stored, and they travel only in the `Authorization` header and in the URL fragment,
-  which browsers never send (docs/adr/0002-secret-key-model.md).
+  which browsers never send ([ADR 0002](docs/adr/0002-secret-key-model.md)).
 - No IP address, full user-agent or persistent identifier is stored or logged
-  (docs/adr/0003-privacy-visitor-hashing.md).
+  ([ADR 0003](docs/adr/0003-privacy-visitor-hashing.md)).

@@ -1,105 +1,104 @@
-# QR Tracker
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/qr-tracker-lockup-dark.svg">
+    <img src="docs/assets/qr-tracker-lockup-light.svg" alt="QR Tracker" height="56">
+  </picture>
+</p>
 
-Free QR code generator with **anonymous scan analytics**. No accounts: each QR code gets
-its own secret key. Built for a research lab, open to anyone.
+<p align="center">
+  <b>Make a QR code for any link and see where, when and on what it gets scanned,</b><br>
+  with no account, no cookie and nothing that identifies the people who scan it.
+</p>
 
-- 🌐 Web app: <https://titouanlegourrierec.github.io/qr-tracker/>
-- 📖 User guide: [docs/user-guide.md](docs/user-guide.md)
+<p align="center">
+  <a href="https://titouanlegourrierec.github.io/qr-tracker/"><b>Open QR Tracker →</b></a>
+</p>
 
-## What it does
+<p align="center">
+  <a href="https://github.com/titouanlegourrierec/qr-tracker/actions/workflows/deploy.yml"><img alt="Deploy" src="https://github.com/titouanlegourrierec/qr-tracker/actions/workflows/deploy.yml/badge.svg"></a>
+  <a href="https://github.com/titouanlegourrierec/qr-tracker/actions/workflows/monitor.yml"><img alt="Monitor" src="https://github.com/titouanlegourrierec/qr-tracker/actions/workflows/monitor.yml/badge.svg"></a>
+  <a href="https://github.com/titouanlegourrierec/qr-tracker/releases"><img alt="Release" src="https://img.shields.io/github/v/release/titouanlegourrierec/qr-tracker"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
+</p>
 
-- Generate a QR code for any URL (PNG print-ready + SVG), protected by Cloudflare
-  Turnstile.
-- Every scan is redirected in milliseconds (302, never cached) and recorded
-  **anonymously**: country/region/city, timezone, device/OS/browser families,
-  language, bot flag, and a daily-salted visitor hash. **No IPs, no full user-agents, no
-  cookies, no persistent identifiers** (see the [privacy ADR](docs/adr/0003-privacy-visitor-hashing.md)).
-- A private dashboard per QR code (secret key in the URL _fragment_ only): totals, time
-  series, hour/day distributions, top locations & devices, bot toggle, CSV export — and a
-  revocable read-only link to share it.
-- Manage without reprinting: change the destination, disable/enable, delete permanently.
-- Abuse handling: public report form, Google Safe Browsing check on destinations, and an
-  operator kill switch (`scripts/admin.mjs`).
-- Free tiers only: GitHub Pages, Cloudflare Workers, D1, Turnstile.
+![The statistics of a QR code: 848 scans over six weeks and the scans per day (demo data)](docs/assets/stats.png)
 
-## Architecture
+QR Tracker turns any web address into a QR code to print, and counts its scans
+anonymously. There are no accounts: each code gets its own secret key, which opens its
+statistics, changes its destination without reprinting, and can share a read-only view.
+Every scan is redirected in milliseconds, without ever storing an IP address, a full
+user-agent or a persistent identifier. Built for a research lab, open to anyone, and run on
+free tiers only.
 
-```mermaid
-flowchart LR
-    subgraph Visitor
-        SCAN["📱 QR scan"]
-    end
-    subgraph GitHubPages["GitHub Pages"]
-        SPA["React SPA (Vite, HashRouter)"]
-    end
-    subgraph Cloudflare["Cloudflare free tier"]
-        W["Worker — Hono<br>redirects · JSON API · cron"]
-        D1[("D1 (SQLite)")]
-        TS["Turnstile"]
-    end
-    SCAN -- "GET /r/:slug → 302 no-store" --> W
-    SPA -- "JSON API" --> W
-    W --> D1
-    W -- "siteverify" --> TS
-```
+## Features
 
-Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · decisions: [docs/adr/](docs/adr/)
-· original plan: [docs/PLAN.md](docs/PLAN.md).
+- **Create** a QR code for any public http(s) link, as a print-ready PNG or an SVG, behind
+  a Cloudflare Turnstile check. The secret key, shown once, is its only credential.
+- **Statistics**: scans and visitors over time, by hour and day of week, on a world map, and
+  by country, city, device, operating system, browser and language. Date ranges in your
+  time zone, bots and link previews left out, CSV export.
+- **Manage without reprinting**: change the destination, disable and re-enable the code, or
+  delete it with all its data.
+- **Share read-only**: a second, revocable link opens the statistics but cannot change
+  anything.
+- **My QR codes**: the codes made in your browser with their scans and last scan, and a JSON
+  export to move them elsewhere.
+- **Anonymous by design**: coarse location, device families, language and a visitor hash
+  whose salt is destroyed every day; scans are deleted after 12 months.
+- **Abuse handling**: destinations checked against Google Safe Browsing, a public report
+  form, and an operator kill switch.
 
-## Tech stack
+<table>
+  <tr>
+    <td width="33%"><img src="docs/assets/create.png" alt="A new QR code with its short link, downloads and one-time secret key (demo data)"></td>
+    <td width="33%"><img src="docs/assets/map.png" alt="A world map of scan locations, countries shaded by number of scans (demo data)"></td>
+    <td width="33%"><img src="docs/assets/codes.png" alt="My QR codes: four codes with their scans, last scan and status (demo data)"></td>
+  </tr>
+  <tr>
+    <td align="center">Create</td>
+    <td align="center">Scan locations</td>
+    <td align="center">My QR codes</td>
+  </tr>
+</table>
 
-TypeScript strict everywhere · pnpm workspaces · **Worker**: Hono, D1 + Wrangler
-migrations, Zod · **Web**: Vite 8, React 19, React Router (hash), Chart.js (lazy),
-SVG world map (d3-geo + topojson, lazy), `qrcode` · **Shared**: Zod schemas as the single API contract · **Tests**: Vitest 4
-(`@cloudflare/vitest-plugin` in the real Workers runtime, Testing Library + MSW, istanbul
-coverage thresholds 90/90/80), Playwright E2E on desktop Chrome, mobile Safari and mobile
-Chrome · ESLint 10 (type-checked) + Prettier · husky, lint-staged, commitlint · license
-gate · Dependabot · hourly production monitor with quota alerts.
+## How it works
 
-## Local development
+A static React app on GitHub Pages creates the codes and shows the statistics. A Cloudflare
+Worker (Hono + D1) on the free plan serves the short links: a scan of `…/r/<code>` gets its
+302 at once, and the scan is recorded after the response, reduced to coarse facts before it
+reaches the database. Keys are stored only as hashes and travel only in an `Authorization`
+header and in the URL fragment, which browsers never send. A daily cron rotates the salt and
+purges old data. [Architecture](docs/ARCHITECTURE.md) has the flows, the API and the data
+model; the decision records explain the [key model](docs/adr/0002-secret-key-model.md) and
+the [privacy model](docs/adr/0003-privacy-visitor-hashing.md).
+
+## Run it yourself
 
 ```bash
-# Node 24 (.nvmrc) — Corepack ships with it:
-corepack enable        # on Node >= 25 instead: npm i -g pnpm
+git clone https://github.com/titouanlegourrierec/qr-tracker.git
+cd qr-tracker
+corepack enable   # Node 24; on Node >= 25: npm i -g pnpm
 pnpm install
-pnpm dev               # worker http://localhost:8787 + web http://localhost:5173
+pnpm dev          # the web app on http://localhost:5173/qr-tracker/
 ```
 
-Local D1 migrations are applied automatically, and `apps/worker/.dev.vars` is created
-from the example with Cloudflare's Turnstile _test_ keys and the local origins allowed to
-call the API — creation works immediately.
-
-## Scripts
-
-| Command                                                      | Description                                                       |
-| ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `pnpm dev`                                                   | Worker + web app in parallel                                      |
-| `pnpm check`                                                 | Format check, lint, typecheck, licenses, unit & integration tests |
-| `pnpm test:e2e`                                              | Playwright end-to-end suite (real worker + built SPA)             |
-| `pnpm build`                                                 | Build all packages                                                |
-| `pnpm format` / `pnpm lint` / `pnpm typecheck` / `pnpm test` | Individual steps                                                  |
-| `node scripts/admin.mjs disable <slug>`                      | Admin kill switch (needs `ADMIN_TOKEN`)                           |
-| `pnpm licenses:check`                                        | Dependency license gate (also part of `pnpm check`)               |
-
-## Project structure
-
-```
-apps/worker/       Cloudflare Worker: routes → services → repositories, lib/ pure fns,
-                   migrations/, tests in the real workerd runtime
-apps/web/          React SPA, i18n/en.ts, components/, pages/, MSW tests
-packages/shared/   Zod schemas + types + constants — the single API contract
-e2e/               Playwright suite (create → scan → stats → edit → delete)
-docs/              PLAN, ARCHITECTURE, DEPLOYMENT, ADRs, user guide
-scripts/           admin.mjs (kill switch CLI), check-licenses.mjs, check-usage.mjs
-```
+Locally, Cloudflare's Turnstile test keys and a local D1 database stand in for the real
+services: no account needed. [Development](docs/development.md) covers the commands and the
+tests, and [Deployment and operations](docs/DEPLOYMENT.md) sets up your own copy on the free
+tiers.
 
 ## Documentation
 
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — step-by-step deployment from scratch
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) & [docs/adr/](docs/adr/)
-- [docs/user-guide.md](docs/user-guide.md) — user guide
-- [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md) ·
-  [SECURITY.md](SECURITY.md) (reporting a vulnerability)
+All of it is in [`docs/`](docs/README.md): the user guide, how it works, development,
+deployment and operations, and the decision records.
+
+## Contributing
+
+Bug reports and ideas are welcome as
+[issues](https://github.com/titouanlegourrierec/qr-tracker/issues);
+[CONTRIBUTING.md](CONTRIBUTING.md) explains how to propose a change. Report a vulnerability
+privately ([SECURITY.md](SECURITY.md)), and a harmful QR code through the app's
+[Report abuse](https://titouanlegourrierec.github.io/qr-tracker/#/report) page.
 
 ## License
 

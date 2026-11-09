@@ -30,8 +30,10 @@ cron at 00:05 UTC, right after its day ends (only the current day's salt is ever
 
 - **Unique visitors are per-UTC-day approximations**: the same person counts once per
   day (and twice if their scans straddle UTC midnight). Documented in the privacy page
-  and the dashboard label ("approx.").
+  and the dashboard label ("Visitors (unique per day)" since 1.3.0).
 - Salt rotation at UTC midnight (not local midnight) keeps the model simple and matches
   the aggregation, at the cost of a slight mismatch with local-day boundaries.
 - The rate limiter reuses the same salted-hash approach for IP keying, so no raw IP is
   ever written anywhere.
+- Since 1.3.0 the AS organization (the visitor's network operator) is no longer stored:
+  migration 0004 dropped the column with its values (data minimization).

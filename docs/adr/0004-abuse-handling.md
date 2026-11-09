@@ -1,6 +1,6 @@
 # ADR 0004 — Abuse handling: Safe Browsing check and anonymous reports
 
-Date: 2026-10-05 · Status: accepted (supersedes the reputation stub in PLAN.md §7.9)
+Date: 2026-10-05 · Status: accepted (supersedes the reputation stub in [PLAN.md §7.9](../PLAN.md#7-decisions-with-rejected-alternatives))
 
 ## Context
 
