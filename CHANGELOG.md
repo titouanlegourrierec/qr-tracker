@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-09
+
+### Changed
+
+- The documentation is reorganized: a shorter README presents the project, and `docs/`
+  gathers the rest, with an index (`docs/README.md`), a development guide
+  (`docs/development.md`: setup, commands, tests) and the current API and data model in
+  `docs/ARCHITECTURE.md`. `docs/PLAN.md` is kept as the historical pre-implementation plan.
+
 ### Security
 
 - The worker refuses API request bodies over 32 KiB with `413 PAYLOAD_TOO_LARGE` before
@@ -194,7 +203,8 @@ First public release.
 - CI (format, lint, typecheck, unit/integration tests with coverage, Playwright E2E)
   and a deploy pipeline (D1 migrations → worker → GitHub Pages → production smoke test).
 
-[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/titouanlegourrierec/qr-tracker/compare/v1.1.0...v1.2.0
